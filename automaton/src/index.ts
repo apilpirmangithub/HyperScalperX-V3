@@ -366,6 +366,17 @@ async function run(): Promise<void> {
   heartbeat.start();
   console.log(`[${new Date().toISOString()}] Heartbeat daemon started.`);
 
+  // ─── Start HYPE_KING Autonomous Trading Loop (NO LLM) ────────
+  try {
+    const { startHypeKingLoop } = await import("./survival/hype-king-loop.js");
+    startHypeKingLoop(db).catch(err => {
+      console.error(`[${new Date().toISOString()}] HYPE_KING loop crashed: ${err.message}`);
+    });
+    console.log(`[${new Date().toISOString()}] 👑 HYPE_KING autonomous trading loop started.`);
+  } catch (err: any) {
+    console.warn(`[${new Date().toISOString()}] HYPE_KING loop failed to start: ${err.message}`);
+  }
+
   // Handle graceful shutdown
   const shutdown = () => {
     console.log(`[${new Date().toISOString()}] Shutting down...`);

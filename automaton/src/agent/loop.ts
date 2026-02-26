@@ -190,7 +190,26 @@ export async function runAgentLoop(
         inference.setLowComputeMode(false);
       }
 
-      // Build context — only keep last 5 turns to prevent panic accumulation
+      // ─── Super Hemat Filter (Pentoshi + Valentini) ──────────────────
+      // First, get all tradable assets and scan the best opportunity via pure code
+      const { scanBestOpportunity } = await import("../survival/hyperliquid.js");
+      const scan = await scanBestOpportunity(inference);
+      const topPick = scan.topPick;
+
+      if (!topPick || topPick.signal.confidence < 20) {
+        const reason = !topPick ? "No valid opportunity found" : `Low confidence (${topPick.signal.confidence}% < 20%)`;
+        log(config, `[SUPER HEMAT] ${reason}. Skipping LLM call and sleeping.`);
+        const idleSleepMs = 120_000; // 2 minutes sleep
+        db.setKV("sleep_until", new Date(Date.now() + idleSleepMs).toISOString());
+        db.setAgentState("sleeping");
+        onStateChange?.("sleeping");
+        running = false;
+        break;
+      }
+
+      log(config, `[SUPER HEMAT] High confidence signal found for ${topPick.market} (${topPick.signal.confidence}%). Waking LLM for final verification.`);
+
+      // ── Build Context ──
       const recentTurns = trimContext(db.getRecentTurns(5));
       const systemPrompt = buildSystemPrompt({
         identity,
@@ -203,10 +222,20 @@ export async function runAgentLoop(
         isFirstRun,
       });
 
+      // Inject the top opportunity data directly into the input to minimize token usage
+      const opportunityData = JSON.stringify({
+        market: topPick.market,
+        price: topPick.price,
+        direction: topPick.signal.direction,
+        confidence: topPick.signal.confidence,
+        reasoning: `Market Structure: ${topPick.signal.marketStructure?.trend}, Position: ${topPick.signal.volumeProfile?.position}`,
+        action: `Execute BERSERKER ${topPick.signal.direction} on ${topPick.market}`,
+      });
+
       const messages = buildContextMessages(
         systemPrompt,
         recentTurns,
-        pendingInput,
+        { content: `NEW OPPORTUNITY: ${opportunityData}\n\n${pendingInput?.content || ""}`, source: "system" },
       );
 
       // Capture input before clearing
@@ -216,7 +245,7 @@ export async function runAgentLoop(
       pendingInput = undefined;
 
       // ── Inference Call ──
-      log(config, `[THINK] Calling ${inference.getDefaultModel()}...`);
+      log(config, `[THINK] Calling ${inference.getDefaultModel()} (Final Check)...`);
 
       const response = await inference.chat(messages, {
         tools: toolsToInferenceFormat(tools),

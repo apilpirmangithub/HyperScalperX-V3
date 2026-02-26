@@ -222,28 +222,48 @@ export async function getMarketInfo(asset: string): Promise<HyperliquidMarketInf
 }
 
 /**
- * Fetch 15m candle data for an asset.
+ * Fetch candle data for an asset, with batching support for large counts.
  */
-export async function getCandles(asset: string, interval: "15m" | "1h" | "5m" = "15m", count: number = 100): Promise<Candle[]> {
+export async function getCandles(asset: string, interval: "15m" | "1h" | "5m" = "15m", count: number = 100, customEndTime?: number): Promise<Candle[]> {
     const { infoClient } = initHyperliquid();
     const intervalMs = interval === "15m" ? 15 * 60_000 : interval === "5m" ? 5 * 60_000 : 60 * 60_000;
-    const startTime = Date.now() - (count * intervalMs);
 
-    const raw = await safeRequest(() => infoClient.candleSnapshot({
-        coin: asset,
-        interval,
-        startTime,
-    }));
+    let allCandles: Candle[] = [];
+    let remaining = count;
+    let currentEndTime = customEndTime || Date.now();
 
-    return raw.map((c: any) => ({
-        t: Number(c.t),
-        o: parseFloat(c.o),
-        h: parseFloat(c.h),
-        l: parseFloat(c.l),
-        c: parseFloat(c.c),
-        v: parseFloat(c.v),
-        n: Number(c.n),
-    }));
+    while (remaining > 0) {
+        const batchCount = Math.min(remaining, 4999);
+        const startTime = currentEndTime - (batchCount * intervalMs);
+
+        const raw = await safeRequest(() => infoClient.candleSnapshot({
+            coin: asset,
+            interval,
+            startTime,
+            endTime: currentEndTime,
+        }));
+
+        const batch = raw.map((c: any) => ({
+            t: Number(c.t),
+            o: parseFloat(c.o),
+            h: parseFloat(c.h),
+            l: parseFloat(c.l),
+            c: parseFloat(c.c),
+            v: parseFloat(c.v),
+            n: Number(c.n),
+        }));
+
+        if (batch.length === 0) break;
+
+        allCandles = [...batch, ...allCandles];
+        remaining -= batch.length;
+        currentEndTime = batch[0].t - 1; // Move back to before the first candle of this batch
+
+        // Artificial delay for rate limits
+        if (remaining > 0) await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    return allCandles.slice(-count);
 }
 
 /**
@@ -515,7 +535,7 @@ export async function scanBestOpportunity(_inference?: any): Promise<{
                     return null;
                 }
 
-                const signal = analyze(candles, SCALP_CONFIG.defaultLeverage, a.funding);
+                const signal = analyze(candles, a.funding);
                 if (signal.direction === "NEUTRAL") {
                     console.log(`[Hyperliquid] ${a.name} neutral: Score ${signal.score} (RSI: ${signal.indicators.rsi.toFixed(1)})`);
                     return null;

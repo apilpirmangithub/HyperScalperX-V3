@@ -41,6 +41,18 @@ export interface TASignal {
     };
     dynamicTP: number;       // % TP based on ATR
     dynamicSL: number;       // % SL based on ATR
+    volumeProfile?: {
+        poc: number;
+        vah: number;
+        val: number;
+        position: "INSIDE_VA" | "ABOVE_VA" | "BELOW_VA";
+    };
+    marketStructure?: {
+        trend: "BULLISH" | "BEARISH" | "SIDEWAYS";
+        lastSwingHigh: number;
+        lastSwingLow: number;
+        isLiquidityGrab: boolean;
+    };
 }
 
 // ─── Indicator Functions ────────────────────────────────────────
@@ -212,12 +224,139 @@ export function volumeSurge(candles: Candle[], lookback = 20): number {
     return candles[candles.length - 1].v / avgVol;
 }
 
+/**
+ * Volume Profile (Visible Range)
+ * Calculates POC, VAH, and VAL from price/volume distribution.
+ */
+export function calculateVolumeProfile(candles: Candle[], bins: number = 24): {
+    poc: number;
+    vah: number;
+    val: number;
+} {
+    if (candles.length === 0) return { poc: 0, vah: 0, val: 0 };
+
+    const prices = candles.map(c => c.c);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const range = max - min;
+    const binSize = range / bins;
+
+    if (binSize === 0) return { poc: min, vah: min, val: min };
+
+    const profile = new Array(bins).fill(0);
+    for (const c of candles) {
+        const binIdx = Math.min(bins - 1, Math.floor((c.c - min) / binSize));
+        profile[binIdx] += c.v;
+    }
+
+    let maxVol = 0;
+    let pocIdx = 0;
+    let totalVol = 0;
+    for (let i = 0; i < bins; i++) {
+        totalVol += profile[i];
+        if (profile[i] > maxVol) {
+            maxVol = profile[i];
+            pocIdx = i;
+        }
+    }
+
+    const poc = min + (pocIdx * binSize) + (binSize / 2);
+
+    // Value Area (70% of total volume)
+    let vaVol = maxVol;
+    let lowIdx = pocIdx;
+    let highIdx = pocIdx;
+    const targetVaVol = totalVol * 0.7;
+
+    while (vaVol < targetVaVol && (lowIdx > 0 || highIdx < bins - 1)) {
+        const prevVol = lowIdx > 0 ? profile[lowIdx - 1] : 0;
+        const nextVol = highIdx < bins - 1 ? profile[highIdx + 1] : 0;
+
+        if (prevVol >= nextVol && lowIdx > 0) {
+            vaVol += prevVol;
+            lowIdx--;
+        } else if (highIdx < bins - 1) {
+            vaVol += nextVol;
+            highIdx++;
+        } else if (lowIdx > 0) {
+            vaVol += prevVol;
+            lowIdx--;
+        } else {
+            break;
+        }
+    }
+
+    const val = min + (lowIdx * binSize);
+    const vah = min + (highIdx * binSize) + binSize;
+
+    return { poc, vah, val };
+}
+
+/**
+ * Simple Market Structure Analysis
+ * Detects basic trend and liquidity grabs.
+ */
+export function analyzeMarketStructure(candles: Candle[]): {
+    trend: "BULLISH" | "BEARISH" | "SIDEWAYS";
+    lastSwingHigh: number;
+    lastSwingLow: number;
+    isLiquidityGrab: boolean;
+} {
+    if (candles.length < 10) return { trend: "SIDEWAYS", lastSwingHigh: 0, lastSwingLow: 0, isLiquidityGrab: false };
+
+    const lookback = 5;
+    let highs: number[] = [];
+    let lows: number[] = [];
+
+    for (let i = lookback; i < candles.length - lookback; i++) {
+        const currentHigh = candles[i].h;
+        const currentLow = candles[i].l;
+
+        let isHigh = true;
+        let isLow = true;
+        for (let j = 1; j <= lookback; j++) {
+            if (candles[i - j].h >= currentHigh || candles[i + j].h > currentHigh) isHigh = false;
+            if (candles[i - j].l <= currentLow || candles[i + j].l < currentLow) isLow = false;
+        }
+
+        if (isHigh) highs.push(currentHigh);
+        if (isLow) lows.push(currentLow);
+    }
+
+    const lastHigh = highs[highs.length - 1] || 0;
+    const lastLow = lows[lows.length - 1] || 0;
+    const currentPrice = candles[candles.length - 1].c;
+
+    // Very basic Trend: Price relative to last swing
+    let trend: "BULLISH" | "BEARISH" | "SIDEWAYS" = "SIDEWAYS";
+    if (currentPrice > lastHigh && lastHigh > 0) trend = "BULLISH";
+    else if (currentPrice < lastLow && lastLow > 0) trend = "BEARISH";
+
+    // Liquidity Grab: Price dips below last low then closes above it (for Long)
+    const prevCandle = candles[candles.length - 2];
+    const isGrab = (prevCandle.l < lastLow && prevCandle.c > lastLow);
+
+    return { trend, lastSwingHigh: lastHigh, lastSwingLow: lastLow, isLiquidityGrab: isGrab };
+}
+
 // ─── Composite Analysis ─────────────────────────────────────────
+
+export interface TAConfig {
+    scoreThreshold: number;
+    volumeSurgeThreshold: number;
+    vaPenalty: number;
+}
+
+const DEFAULT_TA_CONFIG: TAConfig = {
+    scoreThreshold: 20,
+    volumeSurgeThreshold: 1.0,
+    vaPenalty: 0.9
+};
 
 /**
  * Run full TA analysis on candle data. Returns composite signal.
  */
-export function analyze(candles: Candle[], leverage: number = 10, fundingRate: number = 0): TASignal {
+export function analyze(candles: Candle[], fundingRate: number = 0, config: TAConfig = DEFAULT_TA_CONFIG): TASignal {
     const closes = candles.map(c => c.c);
     const currentPrice = closes[closes.length - 1];
 
@@ -324,14 +463,16 @@ export function analyze(candles: Candle[], leverage: number = 10, fundingRate: n
     const absScore = Math.abs(normalizedScore);
 
     // Direction + confidence + Filter rules
-    const trendAligns = (normalizedScore >= 40 && currentPrice > emaTrendLast) || (normalizedScore <= -40 && currentPrice < emaTrendLast);
-    const volumeConfirms = volSurge >= 1.2;
+    // Higher Frequency Strategy: Lower score from 25 to 20, Vol from 1.05 to 1.0
+    const trendAligns = (normalizedScore >= config.scoreThreshold && currentPrice > emaTrendLast) || (normalizedScore <= -config.scoreThreshold && currentPrice < emaTrendLast);
+    const volumeConfirms = volSurge >= 1.0;
 
     const direction: "LONG" | "SHORT" | "NEUTRAL" =
-        (normalizedScore >= 40 && trendAligns && volumeConfirms) ? "LONG" :
-            (normalizedScore <= -40 && trendAligns && volumeConfirms) ? "SHORT" : "NEUTRAL";
+        (normalizedScore >= config.scoreThreshold && trendAligns && volumeConfirms) ? "LONG" :
+            (normalizedScore <= -config.scoreThreshold && trendAligns && volumeConfirms) ? "SHORT" : "NEUTRAL";
 
-    const confidence = Math.min(100, absScore);
+    let finalScore = normalizedScore;
+    let confidence = Math.min(100, absScore);
 
     // ─── Dynamic TP/SL via ATR ──────────────────────────────
 
@@ -343,10 +484,29 @@ export function analyze(candles: Candle[], leverage: number = 10, fundingRate: n
     const dynamicTP = Math.max(0.5, Math.min(5.0, atrTpPct));
     const dynamicSL = Math.max(0.2, Math.min(2.0, atrSlPct));
 
+    // ─── Phase 2 Indicators (Advanced) ────────────────────────
+    const vp = calculateVolumeProfile(candles);
+    const ms = analyzeMarketStructure(candles);
+
+    const vpPosition = currentPrice > vp.vah ? "ABOVE_VA" : currentPrice < vp.val ? "BELOW_VA" : "INSIDE_VA";
+
+    // ─── Strategy Adjustments (Pentoshi/Valentini) ────────────
+    // If inside Value Area, slight confidence reduction
+    if (vpPosition === "INSIDE_VA") {
+        finalScore = finalScore * config.vaPenalty;
+    }
+
+    // Liquidity grab boosts confidence
+    if (ms.isLiquidityGrab) {
+        finalScore = finalScore > 0 ? normalizedScore + 20 : normalizedScore - 20;
+    }
+
+    const finalConfidence = Math.min(100, Math.abs(finalScore));
+
     return {
-        direction,
-        confidence,
-        score: normalizedScore,
+        direction: (finalScore >= config.scoreThreshold) ? "LONG" : (finalScore <= -config.scoreThreshold) ? "SHORT" : "NEUTRAL",
+        confidence: finalConfidence,
+        score: Math.round(finalScore),
         indicators: {
             rsi: rsiVal,
             emaFast: emaFastLast,
@@ -367,5 +527,7 @@ export function analyze(candles: Candle[], leverage: number = 10, fundingRate: n
         },
         dynamicTP,
         dynamicSL,
+        volumeProfile: { ...vp, position: vpPosition },
+        marketStructure: ms,
     };
 }

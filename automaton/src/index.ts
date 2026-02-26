@@ -50,6 +50,7 @@ Usage:
   automaton --init         Initialize wallet and config directory
   automaton --provision    Provision Conway API key via SIWE
   automaton --status       Show current automaton status
+  automaton --backtest [asset] [days] [profile]  Run strategy backtest (profiles: SNIPER, STEADY, SCALPER)
   automaton --version      Show version
   automaton --help         Show this help
 
@@ -105,6 +106,22 @@ Environment:
     }
     await run();
     return;
+  }
+
+  if (args.includes("--backtest")) {
+    const asset = args[args.indexOf("--backtest") + 1] || "ETH";
+    const daysArg = args[args.indexOf("--backtest") + 2];
+    const profile = args[args.indexOf("--backtest") + 3] || "SCALPER";
+    const offsetArg = args[args.indexOf("--backtest") + 4];
+
+    const days = daysArg ? parseInt(daysArg) : 30;
+    const offset = offsetArg ? parseInt(offsetArg) : 0;
+
+    console.log(`Starting BACKTEST Mode | Asset: ${asset} | Days: ${days} | Profile: ${profile} | Offset: ${offset} days ago`);
+
+    const { runBacktest } = await import("./survival/backtest.js");
+    await runBacktest(asset, days, profile, 8, undefined, undefined, undefined, offset);
+    process.exit(0);
   }
 
   if (args.includes("--auto-tunnel")) {

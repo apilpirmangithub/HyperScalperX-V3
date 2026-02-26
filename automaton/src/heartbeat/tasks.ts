@@ -206,32 +206,10 @@ export const BUILTIN_TASKS: Record<string, HeartbeatTaskFn> = {
     return { shouldWake: false };
   },
 
-  scan_perp: async (ctx) => {
-    // Only wake agent to scan if not already recently scanned (avoid constant waking)
-    const lastScan = ctx.db.getKV("last_perp_scan_time"); // Rename key to avoid confusion
-    const lastScanTime = lastScan ? new Date(lastScan).getTime() : 0;
-    const secondsSinceLastScan = (Date.now() - lastScanTime) / 1000;
-
-    // Wake every 30 seconds for ultra-aggressive perpetual scalping
-    if (secondsSinceLastScan < 30) {
-      return { shouldWake: false };
-    }
-
-    let perpOpen = false;
-    try {
-      const pp = JSON.parse(ctx.db.getKV("perp_positions") || "[]");
-      perpOpen = pp.some((p: any) => p.status === "open" || p.status === "pending");
-    } catch { }
-
-    ctx.db.setKV("last_perp_scan_time", new Date().toISOString());
-    ctx.db.setKV("last_scan_type", "scalp");
-
-    return {
-      shouldWake: true,
-      message: perpOpen
-        ? "🔥 MONITOR PERP POSITIONS: Open positions detected. Call scalp_scan() to manage TP/SL."
-        : "⚡ SCAN FOR PERP OPPORTUNITIES: Ready for next scalp. Call scalp_scan().",
-    };
+  scan_perp: async (_ctx) => {
+    // DISABLED: Trading is now handled by the HYPE_KING autonomous loop.
+    // The LLM agent is no longer needed for scalp_scan.
+    return { shouldWake: false };
   },
 
 };

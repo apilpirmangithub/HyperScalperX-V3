@@ -190,24 +190,21 @@ export async function runAgentLoop(
         inference.setLowComputeMode(false);
       }
 
-      // ─── Super Hemat Filter (Pentoshi + Valentini) ──────────────────
-      // First, get all tradable assets and scan the best opportunity via pure code
-      const { scanBestOpportunity } = await import("../survival/hyperliquid.js");
-      const scan = await scanBestOpportunity(inference);
-      const topPick = scan.topPick;
-
-      if (!topPick || topPick.signal.confidence < 20) {
-        const reason = !topPick ? "No valid opportunity found" : `Low confidence (${topPick.signal.confidence}% < 20%)`;
-        log(config, `[SUPER HEMAT] ${reason}. Skipping LLM call and sleeping.`);
-        const idleSleepMs = 120_000; // 2 minutes sleep
-        db.setKV("sleep_until", new Date(Date.now() + idleSleepMs).toISOString());
+      // ─── TRADING DISABLED IN LLM LOOP ──────────────────
+      // Trading is now handled by the HYPE_KING autonomous loop.
+      // The LLM agent only processes social messages (WhatsApp, etc.)
+      const wakeReason = db.getKV("wake_request") || "";
+      const isSocialWake = wakeReason.includes("message") || wakeReason.includes("social");
+      if (!isSocialWake) {
+        log(config, `[HYPE_KING MODE] Non-social wake (${wakeReason || 'unknown'}). Skipping LLM — trading handled by HYPE_KING loop.`);
+        db.setKV("sleep_until", new Date(Date.now() + 120_000).toISOString());
         db.setAgentState("sleeping");
         onStateChange?.("sleeping");
         running = false;
         break;
       }
 
-      log(config, `[SUPER HEMAT] High confidence signal found for ${topPick.market} (${topPick.signal.confidence}%). Waking LLM for final verification.`);
+      log(config, `[SOCIAL] Processing social message. Waking LLM for chat response.`);
 
       // ── Build Context ──
       const recentTurns = trimContext(db.getRecentTurns(5));
@@ -222,20 +219,11 @@ export async function runAgentLoop(
         isFirstRun,
       });
 
-      // Inject the top opportunity data directly into the input to minimize token usage
-      const opportunityData = JSON.stringify({
-        market: topPick.market,
-        price: topPick.price,
-        direction: topPick.signal.direction,
-        confidence: topPick.signal.confidence,
-        reasoning: `Market Structure: ${topPick.signal.marketStructure?.trend}, Position: ${topPick.signal.volumeProfile?.position}`,
-        action: `Execute BERSERKER ${topPick.signal.direction} on ${topPick.market}`,
-      });
-
+      // Social-only context (no trading data for LLM)
       const messages = buildContextMessages(
         systemPrompt,
         recentTurns,
-        { content: `NEW OPPORTUNITY: ${opportunityData}\n\n${pendingInput?.content || ""}`, source: "system" },
+        { content: `${pendingInput?.content || "Social message received."}`, source: "system" },
       );
 
       // Capture input before clearing

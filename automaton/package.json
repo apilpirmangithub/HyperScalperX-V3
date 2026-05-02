@@ -1,88 +1,36 @@
 {
-  "name": "@conway/automaton",
-  "version": "0.1.0",
-  "description": "HyperScalperX — Ultra-aggressive perp scalping AI agent for Hyperliquid/Base.",
+  "name": "hyper-scalper-clean",
+  "version": "1.0.0",
+  "description": "HyperScalperX Specialized Trading Bot (Clean Build)",
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./config.js": {
-      "types": "./dist/config.d.ts",
-      "default": "./dist/config.js"
-    },
-    "./state/database.js": {
-      "types": "./dist/state/database.d.ts",
-      "default": "./dist/state/database.js"
-    }
-  },
   "bin": {
-    "automaton": "dist/index.js",
-    "conway-automaton": "dist/index.js"
+    "automaton": "dist/index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Conway-Research/automaton.git"
-  },
-  "homepage": "https://conway.tech",
-  "keywords": [
-    "autonomous-agent",
-    "sovereign-ai",
-    "web4",
-    "conway",
-    "self-replicating"
-  ],
-  "license": "MIT",
   "scripts": {
-    "build": "tsc && node -e \"const fs=require('fs'); fs.mkdirSync('dist/dashboard', {recursive:true}); fs.copyFileSync('src/dashboard/index.html', 'dist/dashboard/index.html')\" && pnpm -r build",
+    "build": "tsc && node -e \"const fs=require('fs'); fs.mkdirSync('dist/dashboard', {recursive:true}); fs.copyFileSync('src/dashboard/index.html', 'dist/dashboard/index.html')\"",
     "dev": "tsx watch src/index.ts",
     "test": "vitest run",
-    "clean": "rm -rf dist && pnpm -r clean",
-    "deploy": "node scripts/deploy-cloud.mjs",
-    "logs-cloud": "node scripts/cloud-logs.mjs"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ethersproject/contracts": "^5.8.0",
-    "@ethersproject/providers": "^5.8.0",
-    "@ethersproject/wallet": "^5.8.0",
     "@nktkas/hyperliquid": "^0.31.0",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
-    "@polymarket/clob-client": "^5.2.4",
-    "@polymarket/order-utils": "^3.0.1",
     "axios": "^1.13.5",
-    "better-sqlite3": "^11.0.0",
-    "chalk": "^5.3.0",
-    "cron-parser": "^4.9.0",
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.4.5",
     "ethers": "^6.16.0",
-    "gray-matter": "^4.0.3",
-    "https-proxy-agent": "^7.0.6",
-    "ora": "^8.0.0",
-    "simple-git": "^3.24.0",
-    "siwe": "^2.3.0",
-    "socks-proxy-agent": "^8.0.5",
-    "ulid": "^2.3.0",
+    "node-ssh": "^13.2.1",
     "viem": "^2.44.2",
     "yaml": "^2.4.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.10.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
     "typescript": "^5.9.3",
     "vitest": "^2.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild"
-    ]
   }
 }

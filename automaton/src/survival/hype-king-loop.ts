@@ -1,17 +1,5 @@
 /**
- * HYPE_KING Autonomous Trading Loop — EXACT MATCH to Backtest Config #5
- * 
- * Runs the HYPE_KING Config #5 strategy purely in code — NO LLM calls.
- * This loop scans HYPE 5m candles, detects signals via technicals.ts,
- * and places GTC limit orders via the Hyperliquid API.
- * 
- * Config #5: Conf >= 20 | Risk 90% | TP 2.5x ATR | SL 0.5x ATR | 20x Lev
- * 
- * IDENTICAL TO BACKTEST:
- * ✅ Limit order (GTC) with 0.05% price offset
- * ✅ Win-streak compounding: +15% risk per consecutive win, max 2x
- * ✅ 30-min order timeout (cancel unfilled orders)
- * ✅ TP/SL via mid-price check (matching candle-based logic)
+ * HYPE_KING Autonomous Trading Loop — CHAMELEON SNIPER V3 (CLEAN)
  */
 
 import {
@@ -20,267 +8,385 @@ import {
     getOpenPositions,
     getCandles,
     getMidPrice,
-    marketOrder,
-    closePosition,
-    setLeverage,
     checkPositionTPSL,
+    closePosition,
+    placeLimitOrder,
+    getUserFills,
+    getOpenOrders,
+    cancelOrder,
+    placeTPSLOrders,
+    subscribeToPrices
 } from "./hyperliquid.js";
-import { analyze, type TAConfig } from "./technicals.js";
+import { sendTelegramMessage } from "./telegram.js";
+import { analyzeChameleonWick } from "./technicals.js";
 import { loadWalletAccount } from "../identity/wallet.js";
 import type { AutomatonDatabase } from "../types.js";
 
-// ─── HYPE_KING Config (EXACT MATCH to Backtest Config #5) ──────
-const HYPE_KING = {
-    asset: "HYPE",
-    confidence: 20,       // Min confidence to enter
-    riskPct: 0.9,         // 90% of withdrawable per trade
-    tpMulti: 2.5,         // TP = 2.5x dynamic ATR TP
-    slMulti: 0.5,         // SL = 0.5x dynamic ATR SL
-    leverage: 20,         // 20x leverage
-    entryOffset: 0.0005,  // 0.05% better than mid price (limit order offset)
-    scanInterval: 5 * 60 * 1000,  // 5 minutes (match 1 candle)
-    orderTimeout: 30 * 60 * 1000, // 30 minutes (cancel unfilled order after 6 candles)
-    // Win-streak compounding (identical to backtest)
-    streakBonus: 0.15,    // +15% risk per consecutive win
-    streakMaxMulti: 2.0,  // Max 2x risk multiplier
-    taConfig: { scoreThreshold: 10, volumeSurgeThreshold: 0.5, vaPenalty: 1.0 } as TAConfig,
+// ─── THE CHAMELEON PREDATOR Config 🦎 ───────────────────────
+export const HYPE_KING = {
+    ASSETS: ["SOL", "SEI", "WLD", "AAVE", "AVAX", "NEAR", "OP", "ARB", "FET", "PEPE"], 
+    marginPortion: 0.40,        // LOCKED: Agresif Growth 40%
+    TRADING_LEVERAGE: 10,       // LOCKED: 10x Leverage
+    MAX_DROP_THRESHOLD: -3.5,   // LOCKED: Safety Ceiling
+    scanInterval: 60 * 1000,    
+    orderTimeout: 15 * 60 * 1000,
+    trailingStart: 1.7,         // LOCKED: 1.7% Start
+    trailingCallback: 0.5       // LOCKED: 0.5% Callback
 };
+
+let predatorAssets: string[] = [...HYPE_KING.ASSETS];
 
 // ─── State ─────────────────────────────────────────────────────
 let isRunning = false;
 let cycleCount = 0;
-let totalPnl = 0;
-let wins = 0;
-let losses = 0;
-let consecutiveWins = 0;   // For win-streak compounding
-let pendingOrderTime: number | null = null; // Track unfilled order time
+let lastSuccessTime = Date.now();
+const lastTradeTime: Record<string, number> = {}; 
 
 function log(msg: string) {
     console.log(`[${new Date().toISOString()}] [HYPE_KING] ${msg}`);
 }
 
+async function logActivity(db: AutomatonDatabase, type: string, messageEn: string, messageId: string, metadata?: any) {
+    try {
+        db.insertActivity({
+            id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            type,
+            messageEn,
+            messageId,
+            timestamp: new Date().toISOString(),
+            metadata: metadata ? JSON.stringify(metadata) : undefined
+        });
+    } catch (err) {
+        log(`Failed to log activity: ${err}`);
+    }
+}
+
 // ─── Main Loop ─────────────────────────────────────────────────
 
 export async function startHypeKingLoop(db: AutomatonDatabase): Promise<void> {
-    if (isRunning) {
-        log("Already running, skipping duplicate start.");
-        return;
-    }
+    if (isRunning) return;
     isRunning = true;
 
     log("═══════════════════════════════════════════════════");
-    log("👑 HYPE_KING Autonomous Loop Starting (BACKTEST-IDENTICAL)");
-    log(`Config: Conf>=${HYPE_KING.confidence} | Risk ${HYPE_KING.riskPct * 100}% | TP x${HYPE_KING.tpMulti} | SL x${HYPE_KING.slMulti} | ${HYPE_KING.leverage}x Lev`);
-    log(`Streak: +${HYPE_KING.streakBonus * 100}%/win, max ${HYPE_KING.streakMaxMulti}x | Entry offset: ${HYPE_KING.entryOffset * 100}%`);
+    log("👑 HYPE_KING CHAMELEON V3 (CLEAN) Starting");
     log("═══════════════════════════════════════════════════");
 
-    const account = loadWalletAccount();
-    if (!account) {
-        log("❌ Wallet not loaded. Cannot start trading.");
+    await initHyperliquid();
+    subscribeToPrices(HYPE_KING.ASSETS);
+
+    const startBal = await getBalance();
+    if (startBal) {
+        const initialRealized = startBal.totalValue - (startBal.unrealizedPnl || 0);
+        (HYPE_KING as any).peakBalance = initialRealized;
+        (HYPE_KING as any).autoStopThreshold = initialRealized * 0.50; 
+        log(`💰 [Balance] Total: $${startBal.totalValue.toFixed(2)} | Realized: $${initialRealized.toFixed(2)}`);
+        log(`🛡️ [Safety] Circuit Breaker at $${(HYPE_KING as any).autoStopThreshold.toFixed(2)}`);
+    }
+
+    const updatePredators = async () => {
+        try {
+            log("🔍 Scanning for High Volume Predators...");
+            const { infoClient } = initHyperliquid();
+            const data = await infoClient.metaAndAssetCtxs();
+            const universe = data[0].universe;
+            const ctxs = data[1];
+
+            const sorted = universe.map((u, i) => ({
+                name: u.name,
+                volume: parseFloat(ctxs[i].dayNtlVlm || "0")
+            }))
+            .sort((a, b) => b.volume - a.volume)
+            .slice(0, 15)
+            .map(a => a.name);
+            
+            predatorAssets = sorted;
+            subscribeToPrices(predatorAssets);
+            log(`🎯 Predator List Updated: ${predatorAssets.join(", ")}`);
+        } catch (e) {
+            log(`⚠️ Scan Failed: ${e}`);
+        }
+    };
+
+    await updatePredators();
+    await reconcilePositions(db);
+
+    while (isRunning) {
+        try {
+            cycleCount++;
+            if (cycleCount === 1 || cycleCount % 10 === 0) {
+                await updatePredators();
+                await reconcilePositions(db); 
+            }
+
+            await runCycle(db);
+            lastSuccessTime = Date.now(); 
+            
+            const openPosCount = (await getOpenPositions()).length;
+            const sleepMs = openPosCount > 0 ? 3000 : 30000;
+            await new Promise<void>(resolve => setTimeout(resolve, sleepMs));
+        } catch (err: any) {
+            log(`⚠️ Loop Error: ${err.message}`);
+            await new Promise<void>(resolve => setTimeout(resolve, 30000));
+        }
+    }
+}
+
+async function runCycle(db: AutomatonDatabase): Promise<void> {
+    const userAddress = loadWalletAccount()?.address;
+    if (!userAddress) return;
+
+    let hlPositions = await getOpenPositions();
+    let openOrders = await getOpenOrders();
+
+    // 0. Circuit Breaker
+    const bal = await getBalance();
+    if (bal && bal.totalValue < (HYPE_KING as any).autoStopThreshold) {
+        log(`🚨 CIRCUIT BREAKER TRIGGERED! CLOSING ALL.`);
+        for (const pos of hlPositions) await closePosition(pos.asset, pos.size, pos.side === "SHORT");
         isRunning = false;
         return;
     }
 
-    await initHyperliquid();
+    // 1. Cancel stale orders
+    await cancelStaleOrders(db);
 
-    // Main infinite loop
-    while (isRunning) {
-        try {
-            cycleCount++;
-            await runCycle(db);
-        } catch (err: any) {
-            log(`⚠️ Cycle ${cycleCount} error: ${err.message}`);
-        }
+    // 2. Sync external fills
+    await syncExternalTrades(db, userAddress);
 
-        // Sleep until next scan
-        log(`💤 Sleeping ${HYPE_KING.scanInterval / 1000}s until next scan...`);
-        await new Promise(r => setTimeout(r, HYPE_KING.scanInterval));
-    }
-}
-
-export function stopHypeKingLoop(): void {
-    log("🛑 Stopping HYPE_KING loop...");
-    isRunning = false;
-}
-
-// ─── Single Cycle ──────────────────────────────────────────────
-
-async function runCycle(db: AutomatonDatabase): Promise<void> {
-    log(`──── Cycle #${cycleCount} | Streak: ${consecutiveWins}W ────`);
-
-    // 1. Check balance
-    const balance = await getBalance();
-    log(`💰 Balance: $${balance.accountValue.toFixed(2)} | Withdrawable: $${balance.withdrawable.toFixed(2)}`);
-    db.setKV("current_balance_hl", balance.accountValue.toString());
-
-    if (balance.withdrawable < 1.0) {
-        log("⚠️ Balance too low to trade. Waiting...");
-        return;
-    }
-
-    // 2. Check existing positions & manage TP/SL
+    // 3. Monitor open positions
     const openTrades = db.getOpenTrades();
-    const hlPositions = await getOpenPositions();
+    const exchangeOrders = await getOpenOrders();
 
     for (const trade of openTrades) {
-        if (trade.market !== HYPE_KING.asset) continue;
+        if (trade.status === "open") {
+            const pos = hlPositions.find((p: any) => p.asset === trade.market);
+            
+            if (!pos) {
+                db.updateTrade({ id: trade.id, status: "closed", close_time: new Date().toISOString(), close_reason: "exchange_sync" });
+            } else {
+                const isLong = pos.side === "LONG";
+                const mid = await getMidPrice(pos.asset);
+                const pnlPct = ((mid - trade.entry_price) / trade.entry_price * 100) * (isLong ? 1 : -1);
+                
+                // Track peak for Trailing TP
+                const currentPeak = (trade as any).peak_pnl || 0;
+                if (pnlPct > currentPeak) {
+                    db.updateTrade({ id: trade.id, peak_pnl: pnlPct } as any);
+                }
 
-        const hlPos = hlPositions.find(h => h.asset === trade.market);
-        if (!hlPos) {
-            // Position closed externally or liquidated
+                // Self-Healing SL: Check if SL order actually exists on exchange
+                const hasExchangeSL = exchangeOrders.some((o: any) => o.coin === pos.asset && o.reduceOnly === true);
+                
+                if (!hasExchangeSL) {
+                    log(`⚠️ SL missing on exchange for ${pos.asset}, preparing to re-place...`);
+                    db.updateTrade({ id: trade.id, tpsl_placed: false });
+                    trade.tpsl_placed = false; 
+                }
+
+                // TRAILING LOGIC: Start trailing at 1.7% profit, 0.5% callback
+                const trailingStart = HYPE_KING.trailingStart;
+                const callback = HYPE_KING.trailingCallback;
+
+                // FIX: Use currentPeak to keep trailing active even if pnlPct drops below trailingStart
+                if (currentPeak >= trailingStart) {
+                    if (pnlPct < currentPeak - callback) {
+                        log(`🔥 Trailing TP Triggered for ${pos.asset} at ${pnlPct.toFixed(2)}% (Peak: ${currentPeak.toFixed(2)}%)`);
+                        await closePosition(pos.asset, pos.size, !isLong);
+                        await sendTelegramMessage(`💰 <b>TRAILING TP: ${pos.asset}</b>\nProfit: ${pnlPct.toFixed(2)}%\nPeak: ${currentPeak.toFixed(2)}%`);
+                        continue;
+                    }
+                }
+
+
+                // Ensure Hard SL is still there (1.3%)
+                if (!trade.tpsl_placed) {
+                    const slPrice = isLong ? trade.entry_price * 0.987 : trade.entry_price * 1.013;
+                    try {
+                        // 1. Cancel any remnants first to avoid spam
+                        const stale = exchangeOrders.filter((o: any) => o.coin === pos.asset);
+                        for (const s of stale) {
+                            await cancelOrder(s.coin, s.oid);
+                        }
+
+                        log(`🛡️ Placing Hard SL for ${pos.asset} at 1.3% ($${slPrice.toFixed(4)})...`);
+                        const res = await (placeTPSLOrders as any)(pos.asset, pos.size, isLong, 0, slPrice, true); 
+                        if (res.status === "ok") {
+                            db.updateTrade({ id: trade.id, tpsl_placed: true, nuclear_sl: slPrice });
+                        }
+                    } catch (e: any) {
+                        log(`❌ SL Placement Failed for ${pos.asset}: ${e.message}`);
+                    }
+                }
+
+
+            }
+        }
+    }
+
+
+
+    // 4. Scan for new entries
+    if (hlPositions.length === 0) {
+        log(`👀 Scanning for Liquidity Wicks...`);
+        const candidates: any[] = [];
+
+        for (const asset of predatorAssets) {
+            if (openOrders.some((o: any) => o.coin === asset)) continue;
+            const candles = await getCandles(asset, "15m", 150); 
+            if (candles.length < 100) continue;
+
+            const sig = analyzeChameleonWick(candles);
+            if (sig.direction !== "NEUTRAL") {
+                const now = Date.now();
+                if (lastTradeTime[asset] && (now - lastTradeTime[asset] < 30 * 60 * 1000)) continue;
+                
+                candidates.push({ 
+                    asset, 
+                    direction: sig.direction, 
+                    signal: sig,
+                    // Score based on extremity: High Z-Score and High Volume
+                    score: Math.abs(sig.zScore || 0) * (sig.volSurge || 1)
+                });
+            }
+        }
+
+        if (candidates.length > 0) {
+            // Pick the candidate with the highest extremity score
+            const best = candidates.sort((a, b) => b.score - a.score)[0];
+            const { asset, direction, signal } = best;
+            
+            const midPx = await getMidPrice(asset);
+            const margin = (bal.totalValue - 0.5) * HYPE_KING.marginPortion; 
+            const sizeAsset = (margin * HYPE_KING.TRADING_LEVERAGE) / midPx;
+
+            log(`🎯 Best Signal Found: ${asset} (Score: ${best.score.toFixed(2)})`);
+            const result = await placeLimitOrder(asset, direction === "LONG", sizeAsset, midPx);
+            if (result?.status === "ok") {
+                log(`🎯 Entry order placed: ${asset} ${direction} @ ${midPx}`);
+                db.insertTrade({
+                    id: `hk_${Date.now()}`,
+                    market: asset,
+                    side: direction,
+                    leverage: HYPE_KING.TRADING_LEVERAGE,
+                    entry_price: midPx,
+                    margin_usdc: margin,
+                    dynamic_tp: signal.tp,
+                    dynamic_sl: signal.sl,
+                    status: "open",
+                    open_time: new Date().toISOString(),
+                    confidence: 100,
+                    tpsl_placed: false,
+                    tpsl_retries: 0
+                });
+                await logActivity(db, "ENTRY", `Opened ${direction} ${asset}`, `Entry ${asset}`);
+                await sendTelegramMessage(`🚀 <b>OPEN ${direction}: ${asset}</b>\nPrice: ${midPx.toFixed(4)}\nMargin: $${margin.toFixed(2)}`);
+            }
+        }
+    }
+}
+
+async function syncExternalTrades(db: AutomatonDatabase, userAddress: string) {
+    const openTrades = db.getOpenTrades();
+    if (openTrades.length === 0) return;
+    const fills = await getUserFills(userAddress);
+    if (!fills) return;
+
+    for (const trade of openTrades) {
+        const tradeOpenTime = new Date(trade.open_time).getTime();
+        const matchingFills = fills.filter(f => {
+            const fillTime = new Date(f.time).getTime();
+            const closedPnl = parseFloat((f as any).closedPnl || "0");
+            return f.coin === trade.market && fillTime > tradeOpenTime && closedPnl !== 0;
+        });
+
+        if (matchingFills.length > 0) {
+            const latestFill = matchingFills.sort((a,b) => b.time - a.time)[0];
+            const pnlUsdc = matchingFills.reduce((sum, f) => sum + parseFloat((f as any).closedPnl || "0"), 0);
             db.updateTrade({
                 id: trade.id,
                 status: "closed",
-                closeReason: "closed_external",
-                closeTime: new Date().toISOString(),
+                close_price: parseFloat(latestFill.px),
+                pnl_usdc: pnlUsdc,
+                pnl_pct: (pnlUsdc / (trade.margin_usdc * trade.leverage)) * 100,
+                close_time: new Date(latestFill.time).toISOString(),
+                close_reason: "exchange_filled"
             });
-            log(`🔄 ${trade.market} position closed externally.`);
-            consecutiveWins = 0; // Reset streak on external close
-            continue;
-        }
-
-        // Check TP/SL using current mid price (like backtest checking candle H/L)
-        const check = await checkPositionTPSL({
-            market: trade.market,
-            side: trade.side,
-            entryPrice: trade.entryPrice,
-            leverage: trade.leverage,
-            dynamicTP: trade.dynamicTP,
-            dynamicSL: trade.dynamicSL,
-        });
-
-        if (check && check.shouldClose) {
-            log(`🎯 Closing ${trade.side} ${trade.market}: ${check.reason} (PnL ${check.pnlPct.toFixed(1)}%)`);
-            const result = await closePosition(trade.market);
-            if (result) {
-                const pnlUsdc = (check.pnlPct / 100) * trade.marginUsdc * trade.leverage;
-                totalPnl += pnlUsdc;
-
-                // Win/Loss streak tracking (IDENTICAL to backtest)
-                if (pnlUsdc > 0) {
-                    wins++;
-                    consecutiveWins++;
-                    log(`🔥 Win streak: ${consecutiveWins} consecutive wins!`);
-                } else {
-                    losses++;
-                    consecutiveWins = 0; // Reset on loss
-                }
-
-                db.updateTrade({
-                    id: trade.id,
-                    status: "closed",
-                    closePrice: check.currentPrice,
-                    pnlPct: check.pnlPct,
-                    pnlUsdc,
-                    closeTime: new Date().toISOString(),
-                    closeReason: check.reason,
-                });
-                log(`${pnlUsdc >= 0 ? "✅" : "🩸"} PnL: $${pnlUsdc.toFixed(2)} | Total: $${totalPnl.toFixed(2)} | W/L: ${wins}/${losses}`);
-            }
-            pendingOrderTime = null;
-        } else if (check) {
-            log(`📊 ${trade.market} ${trade.side}: PnL ${check.pnlPct >= 0 ? "+" : ""}${check.pnlPct.toFixed(1)}% — holding...`);
+            lastTradeTime[trade.market] = Date.now();
         }
     }
+}
 
-    // 3. Check for unfilled orders (30-min timeout like backtest's 6-candle timeout)
-    if (pendingOrderTime && (Date.now() - pendingOrderTime > HYPE_KING.orderTimeout)) {
-        log(`⏰ Order timeout (30min). Cancelling unfilled order.`);
-        try {
-            await closePosition(HYPE_KING.asset); // Cancel any pending orders
-        } catch (e: any) {
-            log(`Note: No pending order to cancel.`);
-        }
-        pendingOrderTime = null;
-    }
-
-    // 4. Scan for new entry (only if not in HYPE position)
-    const currentHypePos = db.getOpenTrades().filter(t => t.market === HYPE_KING.asset);
-    if (currentHypePos.length > 0) {
-        log(`📌 Already in ${HYPE_KING.asset} position. Waiting for exit.`);
-        return;
-    }
-    if (pendingOrderTime) {
-        log(`⏳ Pending order waiting for fill...`);
-        return;
-    }
-
-    // Fetch 5m candles for HYPE
-    log(`🔍 Scanning ${HYPE_KING.asset} 5m candles...`);
-    const candles = await getCandles(HYPE_KING.asset, "5m", 250);
-    if (candles.length < 200) {
-        log(`⚠️ Not enough candles (${candles.length}). Waiting...`);
-        return;
-    }
-
-    // Run TA analysis
-    const signal = analyze(candles, 0, HYPE_KING.taConfig);
-
-    if (signal.direction === "NEUTRAL" || signal.confidence < HYPE_KING.confidence) {
-        log(`🔇 No signal (${signal.direction} @ ${signal.confidence.toFixed(0)}% conf). Waiting...`);
-        return;
-    }
-
-    // Apply HYPE_KING TP/SL multipliers (IDENTICAL to backtest)
-    const dynamicTP = signal.dynamicTP * HYPE_KING.tpMulti;
-    const dynamicSL = signal.dynamicSL * HYPE_KING.slMulti;
-
-    // Win-streak compounding (IDENTICAL to backtest: +15%/win, max 2x)
-    const streakMultiplier = Math.min(
-        HYPE_KING.streakMaxMulti,
-        1.0 + (consecutiveWins * HYPE_KING.streakBonus)
-    );
-    const effectiveRisk = Math.min(0.95, HYPE_KING.riskPct * streakMultiplier);
-
-    log(`⚡ SIGNAL: ${signal.direction} ${HYPE_KING.asset} | Conf: ${signal.confidence.toFixed(0)}% | TP: ${dynamicTP.toFixed(2)}% | SL: ${dynamicSL.toFixed(2)}% | Risk: ${(effectiveRisk * 100).toFixed(0)}% (streak x${streakMultiplier.toFixed(2)})`);
-
-    // Calculate position size with streak-adjusted risk
-    const refreshedBal = await getBalance();
-    const margin = refreshedBal.withdrawable * effectiveRisk;
-    const midPx = await getMidPrice(HYPE_KING.asset);
-
-    // Entry price offset (0.05% better than mid — IDENTICAL to backtest)
-    // LONG: buy slightly below mid | SHORT: sell slightly above mid
-    const entryPrice = signal.direction === "LONG"
-        ? midPx * (1 - HYPE_KING.entryOffset)
-        : midPx * (1 + HYPE_KING.entryOffset);
-
-    const sizeAsset = (margin * HYPE_KING.leverage) / entryPrice;
-
-    // Set leverage
+async function cancelStaleOrders(db: AutomatonDatabase) {
     try {
-        const { getAllTradableAssets } = await import("./hyperliquid.js");
-        const assets = await getAllTradableAssets();
-        const hypeAsset = assets.assets.find(a => a.name === HYPE_KING.asset);
-        if (hypeAsset) {
-            await setLeverage(hypeAsset.index, HYPE_KING.leverage);
+        const openOrders = await getOpenOrders();
+        const now = Date.now();
+        for (const order of openOrders) {
+            if (now - (order.timestamp || 0) > HYPE_KING.orderTimeout) {
+                // Ignore reduceOnly orders (Stop Loss / Take Profit)
+                if (order.reduceOnly) continue;
+                
+                log(`⏰ Canceling stale entry order: ${order.coin}`);
+                await cancelOrder(order.coin, order.oid);
+            }
         }
-    } catch (e: any) {
-        log(`⚠️ Leverage set note: ${e.message}`);
-    }
+    } catch (e) {}
+}
 
-    // Place GTC limit order (marketOrder with useMakerOrders=true → GTC at mid price)
-    log(`🚀 OPENING ${signal.direction} ${HYPE_KING.asset} | Margin: $${margin.toFixed(2)} @ ${HYPE_KING.leverage}x | Size: ${sizeAsset.toFixed(4)} | Entry: $${entryPrice.toFixed(4)} (mid: $${midPx.toFixed(4)})`);
-    const result = await marketOrder(HYPE_KING.asset, signal.direction === "LONG", sizeAsset);
+async function reconcilePositions(db: AutomatonDatabase) {
+    try {
+        const hlPositions = await getOpenPositions();
+        const openTrades = db.getOpenTrades();
+        for (const pos of hlPositions) {
+            if (parseFloat(pos.size) === 0) continue;
+            if (!openTrades.some(t => t.market === pos.asset && t.status === "open")) {
+                log(`🧩 [Recovery] Adopting ${pos.asset}...`);
+                db.insertTrade({
+                    id: `hk_rec_${Date.now()}`,
+                    market: pos.asset,
+                    side: parseFloat(pos.size) > 0 ? "LONG" : "SHORT",
+                    leverage: 10,
+                    entry_price: pos.entryPrice || 0,
+                    margin_usdc: 1,
+                    dynamic_tp: 2.5,
+                    dynamic_sl: 1.0,
+                    status: "open",
+                    open_time: new Date().toISOString(),
+                    confidence: 50,
+                    tpsl_placed: false,
+                    tpsl_retries: 0
+                });
+            }
+        }
+    } catch (e) {}
+}
 
-    if (result && result.status === "ok") {
-        const tradeId = `hk_${Date.now()}`;
-        db.insertTrade({
-            id: tradeId,
-            market: HYPE_KING.asset,
-            side: signal.direction as "LONG" | "SHORT",
-            leverage: HYPE_KING.leverage,
-            entryPrice: entryPrice,
-            marginUsdc: margin,
-            dynamicTP,
-            dynamicSL,
-            status: "open",
-            openTime: new Date().toISOString(),
-            confidence: signal.confidence,
-        });
-        pendingOrderTime = Date.now();
-        log(`✅ GTC Limit order placed! Trade ID: ${tradeId} | Timeout: 30min`);
-    } else {
-        log(`❌ Order failed: ${JSON.stringify(result)}`);
+export async function getBotStats(db: AutomatonDatabase): Promise<string> {
+    const bal = await getBalance();
+    const stats = db.getTradeStats();
+    return `💰 <b>EQUITY</b>: $${bal.totalValue.toFixed(2)}\n📈 <b>PnL</b>: $${stats.totalPnlUsdc.toFixed(2)}\n🎯 <b>WINRATE</b>: ${stats.winrate.toFixed(1)}%`;
+}
+
+export async function getOpenTradesStatus(): Promise<string> {
+    try {
+        const hlPositions = await getOpenPositions();
+        if (hlPositions.length === 0) return "No active positions. Scanning...";
+        let report = "";
+        for (const p of hlPositions) {
+            const mid = await getMidPrice(p.asset);
+            const pnl = ((mid - p.entryPrice) / p.entryPrice * 100) * (p.side === "LONG" ? 1 : -1);
+            report += `🔭 ${p.asset} (${p.side})\n  ↳ Entry: ${p.entryPrice.toFixed(4)}\n  ↳ Live: ${mid.toFixed(4)}\n  ↳ PnL: ${pnl >= 0 ? '🟢' : '🔴'} ${pnl.toFixed(2)}%\n\n`;
+        }
+        return report.trim();
+    } catch (err: any) {
+        return `⚠️ Error fetching trades: ${err.message}`;
     }
+}
+
+export async function stopBot(): Promise<void> {
+    log("[Telegram] Stopping bot...");
+    isRunning = false;
+    try {
+        const hlPositions = await getOpenPositions();
+        for (const pos of hlPositions) await closePosition(pos.asset, pos.size, pos.side === "SHORT");
+    } catch (e) {}
 }

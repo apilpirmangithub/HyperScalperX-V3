@@ -1,869 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperScalperX Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+    <title>HyperScalperX | CLEAN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a0f;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
-            --accent: #00e5ff;
-            --text: #e0e0e0;
-            --text-dim: #999;
-            --success: #00ffaa;
-            --error: #ff4d4d;
-            --blue: #2979ff;
+            --bg: #020205;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #00f2ff;
+            --text: #ffffff;
+            --text-dim: #888;
+            --up: #00ffa3;
+            --down: #ff3d71;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Outfit', sans-serif;
             background: var(--bg);
             color: var(--text);
-            overflow: hidden;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #020205 70%);
         }
+        .container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 2rem; flex: 1; display: flex; flex-direction: column; gap: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -1px; }
+        .logo span { color: var(--accent); }
+        .status { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 600; background: var(--card); padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); }
+        .dot { width: 8px; height: 8px; background: var(--up); border-radius: 50%; box-shadow: 0 0 10px var(--up); }
+        
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 24px; backdrop-filter: blur(10px); }
+        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; font-weight: 600; }
+        .stat-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
-        @media (max-width: 768px) {
-            body {
-                overflow-y: auto;
-                height: auto;
-                min-height: 100vh;
-            }
-        }
+        .main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; }
+        section { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 1.5rem; display: flex; flex-direction: column; }
+        h2 { font-size: 0.9rem; margin-bottom: 1.5rem; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; }
+        
+        .scroll { flex: 1; overflow-y: auto; padding-right: 10px; }
+        .scroll::-webkit-scrollbar { width: 4px; }
+        .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-        /* Glassmorphism background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0f 100%);
-            z-index: -1;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+        td { padding: 16px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+        
+        .activity-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .activity-meta { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; color: var(--accent); font-weight: 700; }
+        .activity-time { color: var(--text-dim); }
 
-        .container {
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 1rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0.75rem;
-                overflow: visible;
-            }
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
-            }
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, var(--accent), var(--blue));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
-        }
-
-        .dot.sleeping {
-            background: var(--blue);
-            box-shadow: 0 0 10px var(--blue);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 1024px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 1.5rem;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 1rem;
-            flex: 1;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                overflow: visible;
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-        }
-
-        section {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.25rem;
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        h2 {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            color: var(--accent);
-            flex-shrink: 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            padding: 1rem;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        td {
-            padding: 1rem;
-            font-size: 0.9rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .pnl-plus {
-            color: var(--success);
-        }
-
-        .pnl-minus {
-            color: var(--error);
-        }
-
-        .side-badge {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .side-long {
-            background: rgba(0, 255, 170, 0.1);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .side-short {
-            background: rgba(255, 77, 77, 0.1);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-
-        .table-wrapper {
-            flex: 1;
-            overflow-x: auto;
-            overflow-y: auto;
-            min-height: 0;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        @media (max-width: 768px) {
-            .table-wrapper {
-                max-height: 400px;
-            }
-
-            td,
-            th {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-dim);
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .status-badge.active {
-            border-color: var(--success);
-            color: var(--success);
-            background: rgba(0, 255, 114, 0.1);
-            box-shadow: 0 0 10px rgba(0, 255, 114, 0.2);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #666;
-            border-radius: 50%;
-        }
-
-        .status-badge.active .status-dot {
-            background: var(--success);
-            animation: pulse 1.5s infinite;
-        }
-
-        .log-container {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            flex: 1;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            min-height: 0;
-        }
-
-        #alpha-container {
-            overflow-y: auto;
-            max-height: 250px;
-            margin-bottom: 1rem;
-            padding-right: 5px;
-        }
-
-        .log-entry {
-            margin-bottom: 4px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 2px;
-        }
-
-        .log-time {
-            color: var(--text-dim);
-            margin-right: 8px;
-        }
-
-        /* Hypurrscan Alpha Styles */
-        .alpha-card {
-            background: rgba(0, 229, 255, 0.05);
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .alpha-coin {
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .alpha-time {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-        }
-
-        .btn-hypurr {
-            font-size: 0.7rem;
-            color: var(--accent);
-            text-decoration: none;
-            border: 1px solid var(--accent);
-            padding: 2px 8px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .btn-hypurr:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .funding-banner {
-            background: linear-gradient(90deg, #ff4d4d, #f9a825);
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            display: none;
-            border-radius: 0 0 12px 12px;
-            box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
-            margin-bottom: 1rem;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        .auth-banner {
-            background: rgba(255, 121, 198, 0.1);
-            border: 1px solid rgba(255, 121, 198, 0.3);
-            color: #ff79c6;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .auth-banner.active {
-            display: flex;
-        }
-
-        .auth-guide {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 1rem;
-            border: 1px dashed var(--accent);
-            display: none;
-        }
-
-        .auth-guide.visible {
-            display: block;
-        }
-
-        .auth-step {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-        }
-
-        .step-num {
-            background: var(--accent);
-            color: var(--bg);
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
-            font-size: 0.7rem;
-        }
-
-        .address-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            margin: 8px 0;
-            border: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--success);
-        }
-
-        .copy-btn {
-            background: var(--accent);
-            color: var(--bg);
-            border: none;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-            }
-
-            to {
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        footer {
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            flex-shrink: 0;
-            padding-bottom: 0.5rem;
-        }
+        .pnl-up { color: var(--up); }
+        .pnl-down { color: var(--down); }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; background: rgba(255,255,255,0.05); }
     </style>
 </head>
-
 <body>
-    <div id="funding-warning" class="funding-banner">
-        ⚠️ FUNDING REQUIRED: DEPOSIT USDC VIA <a href="https://app.hyperliquid.xyz/" target="_blank"
-            style="color: white; text-decoration: underline;">APP.HYPERLIQUID.XYZ</a> TO START TRADING
-    </div>
     <div class="container">
-        <div id="auth-banner" class="auth-banner">
-            <span>🔐 API WALLET UNAUTHORIZED: Agent cannot trade yet.</span>
-            <button class="copy-btn" onclick="document.getElementById('auth-guide').classList.toggle('visible')">Show
-                Guide</button>
-        </div>
-
-        <div id="auth-guide" class="auth-guide">
-            <h3 style="color:var(--accent); margin-bottom: 1rem; font-size: 1rem;">Delegate Trading Permissions
-                (Authorize API Wallet)</h3>
-            <div class="auth-step">
-                <div class="step-num">1</div>
-                <div>Open <a href="https://app.hyperliquid.xyz/" target="_blank"
-                        style="color:var(--accent)">app.hyperliquid.xyz</a></div>
-            </div>
-            <div class="auth-step">
-                <div class="step-num">2</div>
-                <div>Click <b>'More'</b> (top right) and select <b>'API'</b></div>
-            </div>
-            <div class="auth-step">
-                <div class="step-num">3</div>
-                <div>Click the <b>'Authorize an API Wallet'</b> button</div>
-            </div>
-            <div class="auth-step">
-                <div class="step-num">4</div>
-                <div>Enter a <b>Name</b> (e.g., "HyperScalperX") and this <b>Agent Address</b>:
-                    <div class="address-box">
-                        <span id="agent-addr-display">0x...</span>
-                        <button class="copy-btn" onclick="copyAgentAddr()">Copy</button>
-                    </div>
-                </div>
-            </div>
-            <div class="auth-step">
-                <div class="step-num">5</div>
-                <div>Click <b>'Authorize an API Wallet'</b> and sign the transaction in your Wallet (MetaMask/Rabby).
-                </div>
-            </div>
-            <div
-                style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px;">
-                *Once authorized, the status below will automatically update to <b>ACTIVE</b>.
-            </div>
-        </div>
         <header>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="logo">HyperScalperX</div>
-                <div id="agent-status" class="status-badge">
-                    <div class="status-dot"></div>
-                    <span id="status-text">AGENT: INITIALIZING</span>
-                </div>
-            </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <a id="hypurr-link" href="#" target="_blank" class="btn-hypurr" style="display:none">View On
-                    Hypurrscan</a>
-                <div class="status-badge">
-                    <div id="status-dot" class="dot"></div>
-                    <span id="agent-state">Running</span>
-                </div>
+            <div class="logo">Hyper<span>ScalperX</span> <small style="font-size: 0.6rem; opacity: 0.5; vertical-align: middle;">CLEAN BUILD</small></div>
+            <div class="status">
+                <div class="dot"></div>
+                <span>HYPE_KING ACTIVE</span>
             </div>
         </header>
 
         <div class="grid">
             <div class="stat-card">
-                <div class="stat-label">ACCOUNT VALUE</div>
-                <div class="stat-value" id="acc-value">$0.00</div>
+                <div class="stat-label">Trading Capital (PERP)</div>
+                <div class="stat-value" id="val-perp-big">$0.00</div>
+                <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 10px; display: flex; gap: 12px; font-weight: 600;">
+                    <span>SPOT (HOLDINGS): <span id="val-spot" style="color: var(--text);">$0.00</span></span>
+                    <span>TOTAL: <span id="val-acc" style="color: var(--text);">$0.00</span></span>
+                </div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">TOTAL P&L / WIN RATE</div>
-                <div class="stat-value" id="total-pnl">$0.00 / 0%</div>
+                <div class="stat-label">Total P&L (All Time)</div>
+                <div class="stat-value" id="val-pnl">$0.00</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">OPEN POSITIONS</div>
-                <div class="stat-value" id="open-count">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">CONWAY CREDITS</div>
-                <div class="stat-value" id="credits">$0.00</div>
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" id="val-wr">0.0%</div>
             </div>
         </div>
 
-        <div class="main-content">
+        <div class="main">
             <section>
-                <h2>LIVE POSITIONS (HYPERLIQUID)</h2>
-                <div class="table-wrapper">
-                    <table id="positions-table">
+                <h2>Trade History</h2>
+                <div class="scroll">
+                    <table id="table-trades">
                         <thead>
                             <tr>
-                                <th>ASSET</th>
-                                <th>SIDE</th>
-                                <th>ENTRY</th>
-                                <th>LIVE</th>
-                                <th>P&amp;L</th>
-                                <th>LEVERAGE</th>
+                                <th>Time</th>
+                                <th>Asset</th>
+                                <th>Side</th>
+                                <th>P&L</th>
+                                <th>Reason</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Positions will be injected here -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </section>
             <section>
-                <h2>RECENT TRADES (CLOSED)</h2>
-                <div class="table-wrapper">
-                    <table id="trades-table">
-                        <thead>
-                            <tr>
-                                <th>TIME</th>
-                                <th>ASSET</th>
-                                <th>SIDE</th>
-                                <th>P&amp;L</th>
-                                <th>REASON</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Trades will be injected here -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            <section>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h2 style="margin-bottom: 0;">HYPURRSCAN ALPHA</h2>
-                    <div id="protocol-fees" style="font-size: 0.8rem; color: var(--text-dim);"></div>
-                </div>
-                <div id="alpha-container">
-                    <div style="color:grey; text-align:center; padding: 2rem;">Fetching recently launched perps...</div>
-                </div>
-
-                <h2 style="margin-top: 2rem;">ACTIVITY LOG</h2>
-                <div class="log-container" id="log-container">
-                    <div class="log-entry"><span class="log-time">System</span> Dashboard initialized. Connecting to
-                        API...</div>
-                </div>
+                <h2>Live Activity</h2>
+                <div class="scroll" id="list-activity"></div>
             </section>
         </div>
-
-        <footer>
-            <div class="live-indicator"></div> LIVE DATA REFRESCHING EVERY 10S • CONWAY AUTOMATON V0.1.0
-        </footer>
     </div>
 
     <script>
-        async function fetchData() {
+        async function refresh() {
             try {
                 const res = await fetch('/api/data');
                 const data = await res.json();
-                updateUI(data);
-            } catch (err) {
-                console.error('Fetch error:', err);
-            }
-        }
+                
+                document.getElementById('val-acc').textContent = `$${data.hlAccountValue.toFixed(2)}`;
+                document.getElementById('val-perp-big').textContent = `$${(data.perpValue || 0).toFixed(2)}`;
+                document.getElementById('val-spot').textContent = `$${(data.spotBalance || 0).toFixed(2)}`;
 
-        function copyAgentAddr() {
-            const addr = window.currentAgentAddr;
-            if (addr) {
-                navigator.clipboard.writeText(addr).then(() => {
-                    alert('Agent address copied to clipboard!');
-                });
-            }
-        }
+                document.getElementById('val-pnl').textContent = `$${data.totalPnlUsdc.toFixed(2)}`;
+                document.getElementById('val-pnl').className = 'stat-value ' + (data.totalPnlUsdc >= 0 ? 'pnl-up' : 'pnl-down');
+                document.getElementById('val-wr').textContent = `${data.winRate.toFixed(1)}%`;
 
-        function updateUI(data) {
-            const agentState = data.agentState || 'unknown';
-
-            // Funding Banner
-            const banner = document.getElementById('funding-warning');
-            if (data.fundingRequired || data.hlAccountValue < 1.0) {
-                banner.style.display = 'block';
-                if (data.walletAddress) {
-                    banner.innerHTML = `⚠️ FUNDING REQUIRED: DEPOSIT USDC VIA <a href="https://app.hyperliquid.xyz/" target="_blank" style="color: white; text-decoration: underline;">APP.HYPERLIQUID.XYZ</a> TO START TRADING`;
-                }
-            } else {
-                banner.style.display = 'none';
-            }
-
-            // Stats
-            document.getElementById('acc-value').textContent = `$${data.hlAccountValue.toFixed(4)}`;
-            document.getElementById('total-pnl').textContent = `$${data.scalperTotalPnl.toFixed(2)} / ${data.scalperWinRate}`;
-            document.getElementById('open-count').textContent = data.scalperOpenPositions.length;
-            document.getElementById('credits').textContent = `$${(data.conwayCredits / 100).toFixed(2)}`;
-
-            // Agent Authorization
-            const authBanner = document.getElementById('auth-banner');
-            const agentStatusText = document.getElementById('status-text');
-            const agentAddrDisplay = document.getElementById('agent-addr-display');
-
-            if (data.agentAuth) {
-                agentAddrDisplay.innerText = data.agentAuth.agentAddress;
-                window.currentAgentAddr = data.agentAuth.agentAddress;
-
-                if (!data.agentAuth.authorized) {
-                    authBanner.classList.add('active');
-                    agentStatusText.innerText = 'AGENT: UNAUTHORIZED 🔐';
-                    agentStatusText.style.color = '#ff79c6';
-                } else {
-                    authBanner.classList.remove('active');
-                    document.getElementById('auth-guide').classList.remove('visible');
-                    agentStatusText.innerText = `AGENT: ${agentState.toUpperCase()} ✓`;
-                    agentStatusText.style.color = 'var(--success)';
-                }
-            }
-
-            const stateEl = document.getElementById('agent-state');
-            stateEl.textContent = data.agentState.charAt(0).toUpperCase() + data.agentState.slice(1);
-            const dot = document.getElementById('status-dot');
-            dot.className = 'dot ' + data.agentState;
-
-            // Last Update info in footer
-            const footerEl = document.querySelector('footer');
-            const timeStr = new Date().toLocaleTimeString();
-            // Positions Table
-            const tbody = document.querySelector('#positions-table tbody');
-            tbody.innerHTML = '';
-
-            if (data.scalperOpenPositions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:grey;padding:2rem;">No open positions - scanning markets...</td></tr>';
-            } else {
-                data.scalperOpenPositions.forEach(p => {
-                    const row = document.createElement('tr');
-                    const pnlClass = p.livePnlUsd >= 0 ? 'pnl-plus' : 'pnl-minus';
-                    const sideClass = p.side === 'LONG' ? 'side-long' : 'side-short';
-                    const hypurrMarketUrl = `https://hypurrscan.io/market/${p.tokenSymbol.split(':')[1] || p.tokenSymbol}`;
-
-                    row.innerHTML = `
-                        <td><strong>${p.tokenSymbol}</strong> <a href="${hypurrMarketUrl}" target="_blank" style="text-decoration:none; font-size:10px; margin-left:5px;">🔗</a></td>
-                        <td><span class="side-badge ${sideClass}">${p.side}</span></td>
-                        <td>$${p.entryPrice.toFixed(4)}</td>
-                        <td>$${p.livePrice.toFixed(4)}</td>
-                        <td class="${pnlClass}">${p.livePnlUsd >= 0 ? '+' : ''}${p.livePnlUsd.toFixed(2)} (${p.livePnlPct.toFixed(1)}%)</td>
-                        <td>${p.leverage}x</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-
-            // Trades Table
-            const tradesTbody = document.querySelector('#trades-table tbody');
-            tradesTbody.innerHTML = '';
-
-            if (!data.recentTrades || data.recentTrades.length === 0) {
-                tradesTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:grey;padding:2rem;">No trade history yet.</td></tr>';
-            } else {
-                data.recentTrades.forEach(t => {
-                    const row = document.createElement('tr');
-                    const pnlClass = (t.pnlUsdc || 0) >= 0 ? 'pnl-plus' : 'pnl-minus';
-                    const sideClass = t.side === 'LONG' ? 'side-long' : 'side-short';
-                    const time = new Date(t.closeTime || t.openTime).toLocaleTimeString();
-
-                    row.innerHTML = `
-                        <td style="font-size:10px; color:var(--text-dim);">${time}</td>
+                const tbody = document.querySelector('#table-trades tbody');
+                tbody.innerHTML = data.recentTrades.map(t => `
+                    <tr>
+                        <td style="font-size: 0.7rem; color: #666;">${new Date(t.close_time || t.open_time).toLocaleTimeString()}</td>
                         <td><strong>${t.market}</strong></td>
-                        <td><span class="side-badge ${sideClass}">${t.side}</span></td>
-                        <td class="${pnlClass}">${(t.pnlUsdc || 0) >= 0 ? '+' : ''}$${(t.pnlUsdc || 0).toFixed(2)} (${(t.pnlPct || 0).toFixed(1)}%)</td>
-                        <td style="font-size:11px; color:var(--text-dim);">${t.closeReason || 'Open'}</td>
-                    `;
-                    tradesTbody.appendChild(row);
-                });
-            }
+                        <td><span class="badge" style="color: ${t.side === 'LONG' ? '#00ffa3' : '#ff3d71'}">${t.side}</span></td>
+                        <td class="${t.pnl_usdc >= 0 ? 'pnl-up' : 'pnl-down'}">${t.pnl_usdc >= 0 ? '+' : ''}$${(t.pnl_usdc || 0).toFixed(2)}</td>
+                        <td style="font-size: 0.7rem; opacity: 0.5;">${t.close_reason || 'Open'}</td>
+                    </tr>
+                `).join('');
 
-            // Hypurrscan Alpha
-            if (data.hypurrscan && data.hypurrscan.recentAlpha) {
-                const alphaContainer = document.getElementById('alpha-container');
-                alphaContainer.innerHTML = '';
-                data.hypurrscan.recentAlpha.forEach(a => {
-                    const card = document.createElement('div');
-                    card.className = 'alpha-card';
-                    const baseCoin = a.coin.split(':')[1] || a.coin;
-                    card.innerHTML = `
-                        <div>
-                            <div class="alpha-coin">${a.coin}</div>
-                            <div class="alpha-time">${new Date(a.time).toLocaleTimeString()} • ${a.dex}</div>
+                const activity = document.getElementById('list-activity');
+                activity.innerHTML = data.recentActivities.map(a => `
+                    <div class="activity-item">
+                        <div class="activity-meta">
+                            <span>${a.type}</span>
+                            <span class="activity-time">${new Date(a.timestamp).toLocaleTimeString()}</span>
                         </div>
-                        <a href="https://hypurrscan.io/market/${baseCoin}" target="_blank" class="btn-hypurr">Trade/View</a>
-                    `;
-                    alphaContainer.appendChild(card);
-                });
+                        <div>${a.message_en}</div>
+                    </div>
+                `).join('');
 
-                if (data.hypurrscan.protocolFees) {
-                    const fees = data.hypurrscan.protocolFees;
-                    document.getElementById('protocol-fees').innerHTML = `Protocol Fees: $${(fees.total_fees / 1e12).toFixed(2)}M`;
-                }
-            }
-
-            // Activity Logs
-            const logContainer = document.getElementById('log-container');
-            if (data.recentTurns && data.recentTurns.length > 0) {
-                logContainer.innerHTML = '';
-                // data.recentTurns are already sorted DESC from backend but collected ASC originally, 
-                // but let's ensure we show newest at top if desirable, or bottom. 
-                // Usually newest at top is better for live dashboards.
-                const turns = [...data.recentTurns].reverse();
-
-                turns.forEach(t => {
-                    const turnDiv = document.createElement('div');
-                    turnDiv.className = 'log-entry';
-                    turnDiv.style.marginBottom = '12px';
-                    turnDiv.style.padding = '8px';
-                    turnDiv.style.background = 'rgba(255,255,255,0.02)';
-                    turnDiv.style.borderRadius = '6px';
-                    turnDiv.style.borderLeft = '2px solid var(--accent)';
-
-                    const time = new Date(t.timestamp).toLocaleTimeString();
-                    const stateBadge = `<span style="font-size:10px; padding:2px 6px; border-radius:10px; background:rgba(0,229,255,0.1); color:var(--accent); margin-right:8px;">${t.state.toUpperCase()}</span>`;
-
-                    let html = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <div>${stateBadge}<span class="log-time" style="font-size:10px;">[${time}]</span> <span style="font-weight:600; color:white;">Turn ${t.id.slice(0, 8)}</span></div>
-                            <span style="font-size:10px; color:var(--text-dim);">${t.toolCount} tools</span>
-                        </div>
-                        <div style="color:var(--text); line-height:1.4; margin-bottom:8px; font-size:0.8rem;">${t.thinking}</div>
-                    `;
-
-                    if (t.toolCalls && t.toolCalls.length > 0) {
-                        html += `<div style="margin-top:5px; padding-left:10px; border-left:1px solid rgba(255,255,255,0.1);">`;
-                        t.toolCalls.forEach(tc => {
-                            const icon = tc.error ? '❌' : '🛠️';
-                            const nameColor = tc.error ? 'var(--error)' : 'var(--success)';
-                            html += `
-                                <div style="font-size:11px; margin-bottom:4px;">
-                                    <span style="margin-right:5px;">${icon}</span>
-                                    <span style="color:${nameColor}; font-weight:500;">${tc.name}</span>
-                                    <div style="color:var(--text-dim); font-size:10px; margin-left:20px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90%;">${tc.result}</div>
-                                </div>
-                            `;
-                        });
-                        html += `</div>`;
-                    }
-
-                    turnDiv.innerHTML = html;
-                    logContainer.appendChild(turnDiv);
-                });
-            } else if (logContainer.innerHTML === '' || logContainer.innerText.includes('Connecting')) {
-                logContainer.innerHTML = '<div class="log-entry"><span class="log-time">System</span> Dashboard connected. Waiting for agent activity logs...</div>';
-            }
-
-            // Wallet Link
-            if (data.walletAddress) {
-                const link = document.getElementById('hypurr-link');
-                link.href = `https://hypurrscan.io/address/${data.walletAddress}`;
-                link.style.display = 'inline-block';
-            }
+            } catch (e) { console.error(e); }
         }
-
-        setInterval(fetchData, 10000);
-        fetchData();
+        setInterval(refresh, 5000);
+        refresh();
     </script>
 </body>
-
 </html>

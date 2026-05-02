@@ -136,14 +136,8 @@ async function main() {
     console.log(`✅ Target Sandbox: ${SANDBOX_ID}`);
     await waitForSandboxReady(SANDBOX_ID);
 
-    // 4. Dependencies
-    console.log("[4/7] Verifying cloudflared in sandbox...");
-    const checkCf = await runExec('which cloudflared');
-    if (checkCf.exitCode !== 0) {
-        console.log("[Deploy] Installing cloudflared into sandbox...");
-        const installCmd = 'wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared';
-        await runExec(installCmd, 60000);
-    }
+    // 4. Dependencies (Skipped Cloudflare Tunnel)
+    console.log("[4/7] Skipping cloudflared dependency (using direct port access)...");
 
     // 5. Sync
     console.log("[5/7] Syncing project files & identity...");
@@ -214,34 +208,20 @@ async function main() {
         'tar -xf dist.tar',
         'npm install --omit=dev',
         // Aggressive cleanup
-        'PID=$(ss -tulnp | grep :3001 | awk \'{print $7}\' | cut -d, -f2 | cut -d= -f2); [ -n "$PID" ] && kill -9 $PID || true',
+        'pkill -f "node dist/index.js" || true',
+        'sleep 2',
         'rm -f /root/.automaton/logs/agent.log /root/test_start.log /root/test_dashboard.log',
         'sleep 1',
-        `export CONWAY_API_KEY="${API_KEY}"; nohup node dist/index.js --run --auto-tunnel > /root/.automaton/logs/agent.log 2>&1 &`
+        `export CONWAY_API_KEY="${API_KEY}"; nohup node dist/index.js --run > /root/.automaton/logs/agent.log 2>&1 &`
     ].join('; ');
 
     await runExec(cmd, 300000);
 
-    // 7. Discovery
-    console.log("[7/7] Waiting for Public Dashboard URL...");
-    let publicUrl = null;
-    for (let i = 0; i < 15; i++) {
-        process.stdout.write(".");
-        await new Promise(r => setTimeout(r, 4000));
-        const logs = await runExec('cat /root/.automaton/logs/agent.log 2>/dev/null || echo ""');
-        const match = logs.stdout.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
-        if (match) {
-            publicUrl = match[0];
-            break;
-        }
-    }
+    console.log("[7/7] Verifying Agent Launch...");
+    await new Promise(r => setTimeout(r, 5000)); // Give node time to start
 
     console.log("\n\n\x1b[32m🚀 HypeScalperX IS LIVE IN THE CLOUD!\x1b[0m");
-    if (publicUrl) {
-        console.log(`\x1b[32m[!] PUBLIC DASHBOARD: ${publicUrl}\x1b[0m`);
-    } else {
-        console.log("\x1b[33m[!] Status: Agent launched. Check logs in Conway Portal for URL.\x1b[0m");
-    }
+    console.log(`\x1b[32m[!] PUBLIC DASHBOARD: https://3001-${SANDBOX_ID}.life.conway.tech/\x1b[0m`);
     console.log(`Sandbox: https://app.conway.tech/sandboxes/${SANDBOX_ID}`);
 
     if (fs.existsSync('dist.tar')) fs.unlinkSync('dist.tar');

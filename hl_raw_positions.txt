@@ -1,0 +1,3 @@
+RAW_POS:{"asset":"SOL","side":"LONG","size":1.08,"entryPrice":79.283,"unrealizedPnl":0.35748,"leverage":20,"marginUsed":4.299156,"liveMidPrice":79.6195}
+RAW_POS:{"asset":"DOGE","side":"LONG","size":1246,"entryPrice":0.090401,"unrealizedPnl":0.976864,"leverage":10,"marginUsed":11.361651,"liveMidPrice":0.091174}
+BAL:{"withdrawable":1.618657,"totalValue":48.284960999999996,"accountValue":21.57862,"spotValue":26.706341}

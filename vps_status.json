@@ -1,0 +1,79 @@
+=== DB ===
+{"open":[],"recent":[]}
+=== HL ===
+node:internal/modules/esm/resolve:1182
+    if (inputTypeFlag) { throw new ERR_INPUT_TYPE_NOT_ALLOWED(); }
+                               ^
+
+Error [ERR_INPUT_TYPE_NOT_ALLOWED]: --input-type can only be used with string input via --eval, --print, or STDIN
+    at defaultResolve (node:internal/modules/esm/resolve:1182:32)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+    at ModuleLoader.import (node:internal/modules/esm/loader:605:34)
+    at node:internal/modules/run_main:174:35
+    at asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:11)
+    at runEntryPointWithESMLoader (node:internal/modules/run_main:141:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5) {
+  code: 'ERR_INPUT_TYPE_NOT_ALLOWED'
+}
+
+Node.js v20.20.0
+=== PM2 ===
+HypeKing: online | uptime: 0min | restarts: 10
+=== LOGS ===
+[TAILING] Tailing last 25 lines for [HypeKing] process (change the value with --lines option)
+/root/.pm2/logs/HypeKing-error.log last 25 lines:
+0|HypeKing |     at WebSocket.emitClose (/root/automaton/node_modules/ws/lib/websocket.js:272:10)
+0|HypeKing |     at TLSSocket.socketOnClose (/root/automaton/node_modules/ws/lib/websocket.js:1341:15)
+0|HypeKing |     at TLSSocket.emit (node:events:536:35)
+0|HypeKing | WebSocketRequestError: WebSocket connection closed
+0|HypeKing |     at file:///root/automaton/node_modules/@nktkas/hyperliquid/src/src/transport/websocket/_postRequest.ts:152:16
+0|HypeKing |     at Array.forEach (<anonymous>)
+0|HypeKing |     at ReconnectingWebSocket.handleClose (file:///root/automaton/node_modules/@nktkas/hyperliquid/src/src/transport/websocket/_postRequest.ts:151:19)
+0|HypeKing |     at WebSocket.listenerProxy (file:///root/automaton/node_modules/@nktkas/rews/src/mod.ts:333:24)
+0|HypeKing |     at callListener (/root/automaton/node_modules/ws/lib/event-target.js:290:14)
+0|HypeKing |     at WebSocket.onClose (/root/automaton/node_modules/ws/lib/event-target.js:220:9)
+0|HypeKing |     at WebSocket.emit (node:events:536:35)
+0|HypeKing |     at WebSocket.emitClose (/root/automaton/node_modules/ws/lib/websocket.js:272:10)
+0|HypeKing |     at TLSSocket.socketOnClose (/root/automaton/node_modules/ws/lib/websocket.js:1341:15)
+0|HypeKing |     at TLSSocket.emit (node:events:536:35)
+0|HypeKing | WebSocketRequestError: WebSocket connection closed
+0|HypeKing |     at file:///root/automaton/node_modules/@nktkas/hyperliquid/src/src/transport/websocket/_postRequest.ts:152:16
+0|HypeKing |     at Array.forEach (<anonymous>)
+0|HypeKing |     at ReconnectingWebSocket.handleClose (file:///root/automaton/node_modules/@nktkas/hyperliquid/src/src/transport/websocket/_postRequest.ts:151:19)
+0|HypeKing |     at WebSocket.listenerProxy (file:///root/automaton/node_modules/@nktkas/rews/src/mod.ts:333:24)
+0|HypeKing |     at callListener (/root/automaton/node_modules/ws/lib/event-target.js:290:14)
+0|HypeKing |     at WebSocket.onClose (/root/automaton/node_modules/ws/lib/event-target.js:220:9)
+0|HypeKing |     at WebSocket.emit (node:events:536:35)
+0|HypeKing |     at WebSocket.emitClose (/root/automaton/node_modules/ws/lib/websocket.js:272:10)
+0|HypeKing |     at TLSSocket.socketOnClose (/root/automaton/node_modules/ws/lib/websocket.js:1341:15)
+0|HypeKing |     at TLSSocket.emit (node:events:536:35)
+
+/root/.pm2/logs/HypeKing-out.log last 25 lines:
+0|HypeKing | [Telegram] 🔧 Config Loaded - BotToken: Present | ChatID: 6080564982
+0|HypeKing | [Telegram] ✅ Notifier Initialized for Chat ID: 6080564982
+0|HypeKing | [Telegram] 📡 Interactive Polling Started...
+0|HypeKing | [2026-04-27T16:58:42.345Z] [Checkpoint] 📡 Telegram Interactive Polling Ready.
+0|HypeKing | [2026-04-27T16:58:42.346Z] [Checkpoint] 🖥️ Dashboard active at http://0.0.0.0:3000
+0|HypeKing | [2026-04-27T16:58:42.346Z] [Checkpoint] 🚀 Launching HYPE_KING Trading Engine...
+0|HypeKing | [2026-04-27T16:58:42.346Z] [HYPE_KING] ═══════════════════════════════════════════════════
+0|HypeKing | [2026-04-27T16:58:42.347Z] [HYPE_KING] 👑 HYPE_KING GOLDEN (CLEAN) Loop Starting
+0|HypeKing | [2026-04-27T16:58:42.347Z] [HYPE_KING] ═══════════════════════════════════════════════════
+0|HypeKing | [2026-04-27T16:58:42.347Z] [HYPE_KING] [System] Initializing Hyperliquid...
+0|HypeKing | [2026-04-27T16:58:42.410Z] [HYPE_KING] [Checkpoint] ✅ Hyperliquid Connectivity Established.
+0|HypeKing | 📡 WebSocket Subscribed to: SOL, SEI, WLD, AAVE, AVAX, NEAR, OP, ARB, FET, PEPE
+0|HypeKing | [2026-04-27T16:58:42.413Z] [HYPE_KING] 📡 [Checkpoint] Monitoring prices for: SOL, SEI, WLD, AAVE, AVAX, NEAR, OP, ARB, FET, PEPE
+0|HypeKing | [2026-04-27T16:58:42.414Z] [HYPE_KING] [System] Fetching initial account balance...
+0|HypeKing | [Dashboard] ✅ Web UI active at http://0.0.0.0:3000
+0|HypeKing | [2026-04-27T16:58:42.638Z] [HYPE_KING] 💰 [Balance] Total: $34.12 | Realized: $34.12
+0|HypeKing | [2026-04-27T16:58:42.638Z] [HYPE_KING] 🛡️ [Safety] Circuit Breaker at $17.06 (50% Trailing Max Loss)
+0|HypeKing | [2026-04-27T16:58:42.638Z] [HYPE_KING] ⚡ [System] System calibrated for 10x leverage and 25% margin. Sniper Engaged.
+0|HypeKing | [2026-04-27T16:58:42.638Z] [HYPE_KING] 🔍 Scanning All 230+ Assets for High Volume Predators...
+0|HypeKing | 📡 WebSocket Subscribed to: BTC, ETH, HYPE, SOL, ZEC, CHIP, AAVE, XRP, LDO, PENGU, FARTCOIN, kPEPE, DOGE, MON, TAO
+0|HypeKing | [2026-04-27T16:58:43.083Z] [HYPE_KING] 🎯 Predator List Updated (Top Vol): BTC, ETH, HYPE, SOL, ZEC, CHIP, AAVE, XRP, LDO, PENGU, FARTCOIN, kPEPE, DOGE, MON, TAO
+0|HypeKing | [2026-04-27T16:58:43.086Z] [HYPE_KING] [System] Checking for orphan positions on exchange...
+0|HypeKing | [2026-04-27T16:58:43.230Z] [HYPE_KING] 🔍 Scanning All 230+ Assets for High Volume Predators...
+0|HypeKing | [2026-04-27T16:58:43.665Z] [HYPE_KING] 🎯 Predator List Updated (Top Vol): BTC, ETH, HYPE, SOL, ZEC, CHIP, AAVE, XRP, LDO, PENGU, FARTCOIN, kPEPE, DOGE, MON, TAO
+0|HypeKing | [2026-04-27T16:58:44.778Z] [HYPE_KING] 👀 Scanning Predator Assets for Liquidity Wicks...

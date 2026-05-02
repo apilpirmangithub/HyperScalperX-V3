@@ -45,9 +45,17 @@ export function startDashboardServer(opts: {
         res.end("Not Found");
     });
 
-    server.listen(port, "0.0.0.0", () => {
-        console.log(`[Dashboard] Web UI available at http://0.0.0.0:${port}`);
-    });
+    try {
+        server.on("error", (err: any) => {
+            console.error(`[Dashboard] ❌ SERVER ERROR: ${err.message}`);
+        });
+
+        server.listen(port, "0.0.0.0", () => {
+            console.log(`[Dashboard] ✅ Web UI active at http://0.0.0.0:${port}`);
+        });
+    } catch (err: any) {
+        console.error(`[Dashboard] ❌ FATAL START ERROR: ${err.message}`);
+    }
 
     return server;
 }

@@ -1,12 +1,13 @@
 # 👑 HyperScalperX - V3 Mass Edition
 
-Selamat datang di **HyperScalperX V3**, bot trading otomatis (Expert Advisor) yang dirancang khusus untuk pasar **Hyperliquid**. Bot ini menggunakan strategi *Chameleon Sniper* yang agresif namun aman untuk pertumbuhan saldo yang konsisten.
+Selamat datang di **HyperScalperX V3**, bot trading otomatis (Expert Advisor) yang dirancang khusus untuk pasar kripto derivatif. Bot ini menggunakan strategi *Chameleon Sniper* yang agresif namun aman untuk pertumbuhan saldo yang konsisten.
 
 ---
 
 ## ✨ Fitur Utama
 - **One-Click Deployment**: Instalasi otomatis ke komputer lokal atau VPS.
-- **Locked Strategy**: Strategi (Leverage 10x, TP/SL, Trailing) sudah dikunci oleh pengembang.
+- **Locked Strategy**: Strategi inti sudah dikunci oleh pengembang untuk menjaga performa (Gacor).
+- **Dynamic Compounding**: Besar posisi otomatis membesar seiring bertambahnya saldo Anda.
 - **Circuit Breaker**: Bot berhenti otomatis jika modal turun 50% (Safety).
 - **Telegram Notifier**: Laporan jual-beli real-time ke HP Anda.
 
@@ -41,20 +42,18 @@ Jika Anda menginstal secara **Lokal** (di PC sendiri):
 npm start
 ```
 
-Jika Anda menginstal di **VPS** (lewat Setup tadi), bot sudah otomatis jalan. Untuk memantau di VPS, gunakan:
-```bash
-pm2 status
-pm2 logs HypeKing
-```
-
 ---
 
-## 🛡️ Aturan Strategi (Locked)
-Untuk menjaga performa tetap "Gacor", parameter berikut telah dikunci:
-- **Leverage**: 10x Cross.
-- **Margin**: 40% dari total saldo per posisi.
-- **Hard Stop Loss**: 1.3%.
-- **Trailing Profit**: Mulai aktif di 1.7%, tutup posisi jika koreksi 0.5%.
+## 🛡️ Aturan Strategi (Locked & Valid)
+Untuk menjaga performa tetap optimal, parameter berikut telah dikunci di dalam sistem:
+
+1. **Single-Shot Sniper**: Bot hanya mengelola **Maksimal 1 Posisi Terbuka**. Bot tidak akan membuka posisi baru jika ada trade yang sedang berjalan.
+2. **Dynamic Leverage**: Bot menggunakan pengali **10x dari Margin** yang digunakan.
+   - *Contoh*: Jika modal margin yang digunakan $40, maka nilai posisi (Value) yang dibuka adalah $400.
+3. **Margin Allocation**: Bot secara konsisten menggunakan **40% dari total saldo** per transaksi.
+4. **Range 24 Jam**: Sinyal entry hanya dicari jika harga berada di area ekstrem (pucuk/lembah) dari rentang harga harian (High/Low 24 Jam).
+5. **Hard Stop Loss**: 1.3% (Langsung dipasang di bursa).
+6. **Trailing Profit**: Mulai aktif di 1.7%, tutup posisi jika terjadi koreksi 0.5% dari titik tertinggi.
 
 ---
 

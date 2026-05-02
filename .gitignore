@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.local
+
+# Database
+*.db
+*.db-journal
+
+# Logs & Audit (Ignored for clean repo)
+*.log
+*.txt
+*.json
+!package.json
+!tsconfig.json
+
+# OS files
+.DS_Store
+Thumbs.db

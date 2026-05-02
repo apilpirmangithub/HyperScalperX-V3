@@ -1,0 +1,54 @@
+👑 CHAMELEON SNIPER V3 - STRATEGY GUIDE (SULTAN MODE) 👑
+======================================================
+
+DOKUMEN PANDUAN STRATEGI TRADING OTOMATIS
+Target: High Growth & Safety Protection
+
+I. LOGIKA UTAMA: "SI PENEMBAK JITU" (SNIPER)
+--------------------------------------------
+Bot ini tidak trading sembarangan. Bot bekerja seperti Sniper yang sabar menunggu harga berada di titik paling ekstrem sebelum mengambil keputusan.
+
+1. Aturan Emas (Satu Posisi):
+   - Bot hanya membuka MAKSIMAL 1 posisi dalam satu waktu.
+   - Bot tidak akan belanja koin lain jika masih ada trading yang berjalan. Ini untuk menjaga fokus modal dan keamanan.
+
+2. Jangkar Harga (High/Low 24 Jam):
+   - Bot selalu memantau harga Tertinggi (High) dan Terendah (Low) dalam 24 jam terakhir.
+   - Bot hanya mau JUAL (Short) jika harga sudah sangat tinggi mendekati rekor 24 jam.
+   - Bot hanya mau BELI (Long) jika harga sudah sangat murah mendekati titik terendah 24 jam.
+
+II. ANALISIS TEKNIS (VALIDASI SINYAL)
+--------------------------------------
+Sebelum menembak, bot mengecek 3 syarat wajib:
+1. Harga Ekstrem (Z-Score): Harga harus sudah lari terlalu jauh dari rata-ratanya (Overbought/Oversold).
+2. Penolakan Harga (Wick Rejection): Harus muncul "ekor" panjang pada grafik yang menandakan harga dipukul balik oleh pasar.
+3. Ledakan Volume: Harus ada lonjakan volume transaksi minimal 2x lipat sebagai bukti bahwa pergerakan didorong oleh pemain besar.
+
+III. MANAJEMEN MODAL (SULTAN GROWTH)
+-------------------------------------
+Sistem ini menggunakan metode "Bunga Berbunga" (Compounding) otomatis:
+1. Jaminan (Margin): Menggunakan 40% dari total saldo Anda untuk setiap trading.
+2. Besar Belanja (Position Value): Bot akan belanja koin senilai tepat 10x dari modal jaminan tadi.
+   - [Rumus: Total Belanja = 10 x Margin].
+3. Leverage Dinamis: Nilai leverage di bursa akan menyesuaikan otomatis agar besar belanja tetap akurat sesuai target 10x margin.
+
+IV. PENGAMANAN (EXIT STRATEGY)
+------------------------------
+1. Rem Darurat (Stop Loss):
+   - Jika harga berbalik arah 1.3%, bot akan langsung menutup posisi untuk membatasi rugi. Order ini dipasang langsung di sistem bursa (Anti-Crash).
+
+2. Kunci Keuntungan (Trailing Take Profit):
+   - Bot mulai siaga saat profit menyentuh 1.7%.
+   - Bot akan membiarkan profit terus naik selama harga searah.
+   - Jika harga balik arah sebesar 0.5% dari titik tertingginya, bot langsung "bungkus" (TP) untungnya.
+
+3. Penyelamat Saldo (Circuit Breaker):
+   - Jika saldo turun hingga sisa 50% dari modal awal, bot akan berhenti total untuk menyelamatkan sisa uang Anda.
+
+V. PEMULIHAN OTOMATIS
+----------------------
+Jika VPS mati atau bot restart, bot akan langsung mengenali posisi trading yang tertinggal dan memasangkan kembali pengamannya (SL/TP) secara otomatis.
+
+======================================================
+STRATEGI INI 100% TERKUNCI DALAM SISTEM HYPERSCALPERX V3
+======================================================

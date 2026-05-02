@@ -1,7 +1,0 @@
-POSITIONS_START
-{"asset":"SOL","side":"LONG","size":1.08,"entryPrice":null,"currentPrice":79.6325,"pnlPct":"NaN","pnlUsdApprox":"NaN","marginUsed":"4.30","leverage":20,"liquidationPx":"N/A"}
-{"asset":"DOGE","side":"LONG","size":1246,"entryPrice":null,"currentPrice":0.091188,"pnlPct":"NaN","pnlUsdApprox":"NaN","marginUsed":"11.36","leverage":10,"liquidationPx":"N/A"}
-POSITIONS_END
-BALANCE_START
-{"withdrawable":1.637275,"totalValue":48.326333,"accountValue":21.599306,"spotValue":26.727027}
-BALANCE_END

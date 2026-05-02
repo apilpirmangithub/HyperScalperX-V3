@@ -1,4 +1,0 @@
-SOL asset index: 5
-Setting SOL leverage to 10x (cross)...
-Result: {"status":"ok","response":{"type":"default"}}
-SOL Position After: {"coin":"SOL","leverage":{"type":"cross","value":10},"size":"1.08","entryPx":"79.283"}

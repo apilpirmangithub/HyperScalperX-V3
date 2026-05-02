@@ -1,5 +1,0 @@
-BEFORE_CLOSE:{"asset":"DOGE","side":"LONG","size":1246,"entry":0.090401,"currentPrice":0.091099,"pnlPct":"0.772%","estPnlUsd":"0.8764"}
-Closing DOGE LONG position...
-CLOSE_RESULT:{"status":"ok","response":{"type":"order","data":{"statuses":[{"filled":{"totalSz":"1246.0","avgPx":"0.091111","oid":369505115280}}]}}}
-ERROR: Directory import '/root/automaton/node_modules/better-sqlite3' is not supported resolving ES modules imported from /tmp/close_doge.mjs
-Did you mean to import "/root/automaton/node_modules/better-sqlite3/lib/index.js"?

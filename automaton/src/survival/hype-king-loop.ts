@@ -242,15 +242,29 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
             const sizeAsset = (margin * HYPE_KING.TRADING_LEVERAGE) / midPx;
 
             log(`🎯 Best Signal Found: ${asset} (Score: ${best.score.toFixed(2)})`);
-            const result = await exchange.placeLimitOrder(asset, direction === "LONG", sizeAsset, midPx);
+            
+            // ENSURE WE HAVE ENOUGH MARGIN
+            if (bal.withdrawable < margin) {
+                log(`⚠️ Insufficient Margin: Need $${margin.toFixed(2)}, Have $${bal.withdrawable.toFixed(2)}`);
+                continue;
+            }
+
+            const result = await (exchange as any).client.createMarketOrder(
+                `${asset}/USDT:USDT`,
+                direction === "LONG" ? 'buy' : 'sell',
+                (exchange as any).client.amountToPrecision(`${asset}/USDT:USDT`, sizeAsset)
+            );
+
             if (result) {
-                log(`🎯 Entry order placed: ${asset} ${direction} @ ${midPx}`);
+                const actualEntryPrice = result.average || result.price || midPx;
+                log(`🎯 Market Entry Executed: ${asset} ${direction} @ ${actualEntryPrice} (Size: ${sizeAsset.toFixed(4)})`);
+                
                 db.insertTrade({
                     id: `hk_${Date.now()}`,
                     market: asset,
                     side: direction,
                     leverage: HYPE_KING.TRADING_LEVERAGE,
-                    entry_price: midPx,
+                    entry_price: actualEntryPrice,
                     margin_usdc: margin,
                     dynamic_tp: signal.tp,
                     dynamic_sl: signal.sl,

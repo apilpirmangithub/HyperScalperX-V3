@@ -17,8 +17,10 @@
     "@nktkas/hyperliquid": "^0.31.0",
     "axios": "^1.13.5",
     "better-sqlite3": "^11.10.0",
+    "ccxt": "^4.5.52",
     "dotenv": "^16.4.5",
     "ethers": "^6.16.0",
+    "firebase-admin": "^13.9.0",
     "node-ssh": "^13.2.1",
     "viem": "^2.44.2",
     "yaml": "^2.4.0"

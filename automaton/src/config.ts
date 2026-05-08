@@ -28,10 +28,19 @@ export function loadConfig(): AutomatonConfig | null {
 
   try {
     const raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    return {
+    const config = {
       ...DEFAULT_CONFIG,
       ...raw,
     } as AutomatonConfig;
+
+    // Overwrite with ENV if present
+    if (process.env.EXCHANGE_TYPE) config.exchangeType = process.env.EXCHANGE_TYPE as any;
+    if (process.env.BINANCE_API_KEY) config.binanceApiKey = process.env.BINANCE_API_KEY;
+    if (process.env.BINANCE_API_SECRET) config.binanceApiSecret = process.env.BINANCE_API_SECRET;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) config.firebaseServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (process.env.FIREBASE_DB_URL) config.firebaseDbUrl = process.env.FIREBASE_DB_URL;
+
+    return config;
   } catch {
     return null;
   }

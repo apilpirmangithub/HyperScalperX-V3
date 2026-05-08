@@ -29,26 +29,49 @@ async function main(): Promise<void> {
   const db = createDatabase(dbPath);
   console.log(`[${new Date().toISOString()}] [Checkpoint] ✅ Database Online at ${dbPath}`);
 
-  // 3. Load Wallet
-  const account = loadWalletAccount();
-  const mainAddress = getMainWalletAddress();
-  console.log(`[${new Date().toISOString()}] [Checkpoint] 🔑 Signer Wallet: ${account?.address || "Missing"} | Main: ${mainAddress || "Missing"}`);
+  // 3. Load Wallet (Optional for Binance)
+  let account = null;
+  let mainAddress = "";
+  if (config.exchangeType !== "binance") {
+    account = loadWalletAccount();
+    mainAddress = getMainWalletAddress();
+    console.log(`[${new Date().toISOString()}] [Checkpoint] 🔑 Signer Wallet: ${account?.address || "Missing"} | Main: ${mainAddress || "Missing"}`);
+  } else {
+    console.log(`[${new Date().toISOString()}] [Checkpoint] 🔑 Binance Mode: Skipping EVM Wallet.`);
+  }
 
-  // 4. Initialize Telegram (Interactive)
+  // 5. Initialize Exchange
+  let exchange;
+  if (config.exchangeType === "binance") {
+    const { BinanceExchange } = await import("./survival/binance.js");
+    if (!config.binanceApiKey || !config.binanceApiSecret) {
+      console.error("❌ ERROR: Binance API Key/Secret missing in config.");
+      process.exit(1);
+    }
+    exchange = new BinanceExchange(config.binanceApiKey, config.binanceApiSecret);
+  } else {
+    const { HyperliquidExchange } = await import("./survival/hyperliquid_exchange.js");
+    exchange = new HyperliquidExchange();
+  }
+  await exchange.init();
+  console.log(`[${new Date().toISOString()}] [Checkpoint] 🏦 Exchange Online: ${exchange.name}`);
+
+  // 6. Initialize Telegram (Interactive)
   initTelegram();
   startTelegramPolling({
-    getStatus: async () => await getBotStats(db),
-    getOpenTrades: async () => await getOpenTradesStatus(),
-    stopBot: async () => await stopBot()
+    getStatus: async () => await getBotStats(db, exchange),
+    getOpenTrades: async () => await getOpenTradesStatus(exchange),
+    stopBot: async () => await stopBot(exchange)
   });
   console.log(`[${new Date().toISOString()}] [Checkpoint] 📡 Telegram Interactive Polling Ready.`);
 
-  // 5. Start Dashboard Web UI (Port 3000)
+  // 7. Start Dashboard Web UI (Port 3000)
   try {
     startDashboardServer({
       db,
       config,
       walletAddress: mainAddress,
+      exchange: exchange,
       port: 3000
     });
     console.log(`[${new Date().toISOString()}] [Checkpoint] 🖥️ Dashboard active at http://0.0.0.0:3000`);
@@ -56,10 +79,23 @@ async function main(): Promise<void> {
     console.warn(`[${new Date().toISOString()}] ⚠️ Dashboard failed: ${err.message}`);
   }
 
-  // 6. Start HYPE_KING Autonomous Trading Loop
+  // 9. Start Firebase Sync (Optional)
+  console.log(`[${new Date().toISOString()}] [Checkpoint] 🛡️ Checking Firebase Sync... Account: ${config.firebaseServiceAccount ? "SET" : "MISSING"}, URL: ${config.firebaseDbUrl ? "SET" : "MISSING"}`);
+  if (config.firebaseServiceAccount && config.firebaseDbUrl) {
+    try {
+      const { initFirebasePusher, startFirebaseSync } = await import("./survival/firebase-pusher.js");
+      initFirebasePusher(config.firebaseServiceAccount, config.firebaseDbUrl);
+      startFirebaseSync(db, exchange);
+      console.log(`[${new Date().toISOString()}] [Checkpoint] 🔥 Firebase Sync Module Started.`);
+    } catch (err: any) {
+      console.error(`[Firebase] ❌ Failed to start sync module: ${err.message}`);
+    }
+  }
+
+  // 10. Start HYPE_KING Autonomous Trading Loop
   try {
-    console.log(`[${new Date().toISOString()}] [Checkpoint] 🚀 Launching HYPE_KING Trading Engine...`);
-    startHypeKingLoop(db).catch(err => {
+    console.log(`[${new Date().toISOString()}] [Checkpoint] 🚀 Launching HYPE_KING Trading Engine on ${exchange.name}...`);
+    startHypeKingLoop(db, exchange).catch(err => {
       console.error(`[CRITICAL] HYPE_KING loop crashed: ${err.message}`);
     });
   } catch (err: any) {

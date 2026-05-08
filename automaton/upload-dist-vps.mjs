@@ -6,9 +6,9 @@ const ssh = new NodeSSH();
 async function uploadDist() {
     try {
         await ssh.connect({
-            host: 'server021294638',
+            host: '82.25.62.152',
             username: 'root',
-            password: '@venged7XXgg32',
+            password: '@Avenged7XX',
             readyTimeout: 20000
         });
         

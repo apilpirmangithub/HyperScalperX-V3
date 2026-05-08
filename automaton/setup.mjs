@@ -15,13 +15,27 @@ async function runSetup() {
     console.log("=".repeat(50));
     console.log("\nSelamat datang! Mari siapkan bot trading Anda.\n");
 
-    // 1. Private Key
+    // 0. Exchange Selection
+    console.log("\n--- Pilih Bursa Efek (Exchange) ---");
+    console.log("1. Hyperliquid (DEX - Perlu Private Key)");
+    console.log("2. Binance (CEX - Perlu API Key & Secret)");
+    const choice = await ask("Pilihan Anda (1/2): ");
+    const exchangeType = choice === "2" ? "binance" : "hyperliquid";
+
     let pk = "";
-    while (!pk.startsWith("0x") || pk.length !== 66) {
-        pk = await ask("🔑 Masukkan Private Key Hyperliquid (0x...): ");
-        if (!pk.startsWith("0x") || pk.length !== 66) {
-            console.log("❌ Format Private Key salah. Harus diawali '0x' dan panjang 66 karakter.");
+    let binanceApiKey = "";
+    let binanceApiSecret = "";
+
+    if (exchangeType === "hyperliquid") {
+        while (!pk.startsWith("0x") || pk.length !== 66) {
+            pk = await ask("🔑 Masukkan Private Key Hyperliquid (0x...): ");
+            if (!pk.startsWith("0x") || pk.length !== 66) {
+                console.log("❌ Format Private Key salah. Harus diawali '0x' dan panjang 66 karakter.");
+            }
         }
+    } else {
+        binanceApiKey = await ask("🔑 Masukkan Binance API Key: ");
+        binanceApiSecret = await ask("🔑 Masukkan Binance API Secret: ");
     }
 
     // 2. Telegram
@@ -35,8 +49,15 @@ async function runSetup() {
     // 3. Build .env
     const envContent = `# 👑 HyperScalperX Configuration (User Settings)
 
-# 🔑 Wallet Identity
+# 🏦 Exchange Settings
+EXCHANGE_TYPE=${exchangeType}
+
+# 🔑 Hyperliquid Wallet (Required if exchange is hyperliquid)
 PRIVATE_KEY=${pk}
+
+# 🔑 Binance API (Required if exchange is binance)
+BINANCE_API_KEY=${binanceApiKey}
+BINANCE_API_SECRET=${binanceApiSecret}
 
 # 📡 Telegram Notifications
 TELEGRAM_BOT_TOKEN=${tgToken || 'your_bot_token'}

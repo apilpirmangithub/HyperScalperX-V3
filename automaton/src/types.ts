@@ -37,12 +37,18 @@ export interface AutomatonConfig {
   version: string;
   telegramBotToken?: string;
   telegramChatId?: string;
+  exchangeType?: "hyperliquid" | "binance";
+  binanceApiKey?: string;
+  binanceApiSecret?: string;
+  firebaseServiceAccount?: string;
+  firebaseDbUrl?: string;
 }
 
 export const DEFAULT_CONFIG: Partial<AutomatonConfig> = {
   dbPath: "~/.automaton/state.db",
   logLevel: "info",
   version: "1.0.0-clean",
+  exchangeType: "hyperliquid",
 };
 
 // ─── Perpetual Trading ───────────────────────────────────────────

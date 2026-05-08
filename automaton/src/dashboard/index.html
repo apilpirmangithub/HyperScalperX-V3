@@ -3,156 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperScalperX | CLEAN</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>HyperScalperX | Elite Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #020205;
-            --card: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.08);
-            --accent: #00f2ff;
-            --text: #ffffff;
-            --text-dim: #888;
-            --up: #00ffa3;
-            --down: #ff3d71;
+            --bg: #0a0a0a;
+            --card: #141414;
+            --text: #f0f0f0;
+            --dim: #777;
+            --accent: #00ff88;
+            --danger: #ff4444;
+            --border: #222;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #020205 70%);
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            padding: 2rem;
+            line-height: 1.5;
         }
-        .container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 2rem; flex: 1; display: flex; flex-direction: column; gap: 2rem; }
-        header { display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -1px; }
-        .logo span { color: var(--accent); }
-        .status { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 600; background: var(--card); padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); }
-        .dot { width: 8px; height: 8px; background: var(--up); border-radius: 50%; box-shadow: 0 0 10px var(--up); }
-        
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 24px; backdrop-filter: blur(10px); }
-        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; font-weight: 600; }
-        .stat-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
-        .main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; }
-        section { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 1.5rem; display: flex; flex-direction: column; }
-        h2 { font-size: 0.9rem; margin-bottom: 1.5rem; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; }
-        
-        .scroll { flex: 1; overflow-y: auto; padding-right: 10px; }
-        .scroll::-webkit-scrollbar { width: 4px; }
-        .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .container { max-width: 900px; margin: 0 auto; }
 
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-dim); border-bottom: 1px solid var(--border); }
-        td { padding: 16px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
-        
-        .activity-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .activity-meta { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; color: var(--accent); font-weight: 700; }
-        .activity-time { color: var(--text-dim); }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
 
-        .pnl-up { color: var(--up); }
-        .pnl-down { color: var(--down); }
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; background: rgba(255,255,255,0.05); }
+        h1 { font-weight: 600; font-size: 1.1rem; letter-spacing: 3px; color: var(--accent); }
+        .status-dot { 
+            display: inline-block; 
+            width: 8px; height: 8px; 
+            background: var(--accent); 
+            border-radius: 50%; 
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+
+        .stat-card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .stat-value { font-size: 1.8rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .stat-value.pnl-pos { color: var(--accent); }
+        .stat-value.pnl-neg { color: var(--danger); }
+
+        section { margin-bottom: 3rem; }
+        h2 { font-size: 0.8rem; color: var(--dim); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+
+        .table-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: var(--card); }
+        th { text-align: left; padding: 1.2rem; font-size: 0.7rem; color: var(--dim); background: #1a1a1a; text-transform: uppercase; }
+        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; }
+
+        .side-long { color: var(--accent); }
+        .side-short { color: var(--danger); }
+
+        .empty { padding: 3rem; text-align: center; color: var(--dim); font-size: 0.8rem; background: var(--card); border-radius: 8px; }
+
+        .log-item { margin-bottom: 8px; border-left: 2px solid #333; padding-left: 12px; transition: all 0.3s; }
+        .log-item:hover { border-left-color: var(--accent); background: #111; }
+        .log-time { color: #555; margin-right: 10px; }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">Hyper<span>ScalperX</span> <small style="font-size: 0.6rem; opacity: 0.5; vertical-align: middle;">CLEAN BUILD</small></div>
-            <div class="status">
-                <div class="dot"></div>
-                <span>HYPE_KING ACTIVE</span>
-            </div>
+            <h1>HYPERSCALPER X</h1>
+            <div><span class="status-dot"></span> <span id="sync-status" style="font-size: 0.7rem; color: var(--dim)">SYNCING...</span></div>
         </header>
 
         <div class="grid">
             <div class="stat-card">
-                <div class="stat-label">Trading Capital (PERP)</div>
-                <div class="stat-value" id="val-perp-big">$0.00</div>
-                <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 10px; display: flex; gap: 12px; font-weight: 600;">
-                    <span>SPOT (HOLDINGS): <span id="val-spot" style="color: var(--text);">$0.00</span></span>
-                    <span>TOTAL: <span id="val-acc" style="color: var(--text);">$0.00</span></span>
-                </div>
+                <div class="stat-label">Total Equity</div>
+                <div id="equity" class="stat-value">$0.00</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Total P&L (All Time)</div>
-                <div class="stat-value" id="val-pnl">$0.00</div>
+                <div class="stat-label">Net Profit</div>
+                <div id="pnl" class="stat-value">$0.00</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Win Rate</div>
-                <div class="stat-value" id="val-wr">0.0%</div>
+                <div id="winrate" class="stat-value">0%</div>
             </div>
         </div>
 
-        <div class="main">
-            <section>
-                <h2>Trade History</h2>
-                <div class="scroll">
-                    <table id="table-trades">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Asset</th>
-                                <th>Side</th>
-                                <th>P&L</th>
-                                <th>Reason</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </section>
-            <section>
-                <h2>Live Activity</h2>
-                <div class="scroll" id="list-activity"></div>
-            </section>
-        </div>
+        <section>
+            <h2>Active Positions</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Side</th>
+                            <th>Size</th>
+                            <th>Entry</th>
+                            <th>PnL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="positions-list">
+                    </tbody>
+                </table>
+                <div id="no-pos" class="empty" style="display: none;">No active trades. Scanning...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Activity Logs</h2>
+            <div id="activity-log">
+            </div>
+        </section>
     </div>
 
     <script>
-        async function refresh() {
+        const DB_URL = "https://mytradingbot-e4f0d-default-rtdb.firebaseio.com/trading_stats.json";
+
+        async function updateData() {
             try {
-                const res = await fetch('/api/data');
-                const data = await res.json();
+                const response = await fetch(DB_URL);
+                const data = await response.json();
                 
-                document.getElementById('val-acc').textContent = `$${data.hlAccountValue.toFixed(2)}`;
-                document.getElementById('val-perp-big').textContent = `$${(data.perpValue || 0).toFixed(2)}`;
-                document.getElementById('val-spot').textContent = `$${(data.spotBalance || 0).toFixed(2)}`;
+                if (!data) return;
 
-                document.getElementById('val-pnl').textContent = `$${data.totalPnlUsdc.toFixed(2)}`;
-                document.getElementById('val-pnl').className = 'stat-value ' + (data.totalPnlUsdc >= 0 ? 'pnl-up' : 'pnl-down');
-                document.getElementById('val-wr').textContent = `${data.winRate.toFixed(1)}%`;
+                document.getElementById('sync-status').innerText = "LIVE • " + new Date().toLocaleTimeString();
 
-                const tbody = document.querySelector('#table-trades tbody');
-                tbody.innerHTML = data.recentTrades.map(t => `
-                    <tr>
-                        <td style="font-size: 0.7rem; color: #666;">${new Date(t.close_time || t.open_time).toLocaleTimeString()}</td>
-                        <td><strong>${t.market}</strong></td>
-                        <td><span class="badge" style="color: ${t.side === 'LONG' ? '#00ffa3' : '#ff3d71'}">${t.side}</span></td>
-                        <td class="${t.pnl_usdc >= 0 ? 'pnl-up' : 'pnl-down'}">${t.pnl_usdc >= 0 ? '+' : ''}$${(t.pnl_usdc || 0).toFixed(2)}</td>
-                        <td style="font-size: 0.7rem; opacity: 0.5;">${t.close_reason || 'Open'}</td>
-                    </tr>
-                `).join('');
+                // Stats (with null safety)
+                document.getElementById('equity').innerText = `$${(data.equity || 0).toFixed(2)}`;
+                const pnlEl = document.getElementById('pnl');
+                const pnlVal = data.totalPnl || 0;
+                pnlEl.innerText = `${pnlVal >= 0 ? '+' : ''}$${pnlVal.toFixed(2)}`;
+                pnlEl.className = `stat-value ${pnlVal >= 0 ? 'pnl-pos' : 'pnl-neg'}`;
+                document.getElementById('winrate').innerText = `${(data.winRate || 0).toFixed(1)}%`;
 
-                const activity = document.getElementById('list-activity');
-                activity.innerHTML = data.recentActivities.map(a => `
-                    <div class="activity-item">
-                        <div class="activity-meta">
-                            <span>${a.type}</span>
-                            <span class="activity-time">${new Date(a.timestamp).toLocaleTimeString()}</span>
+                // Positions
+                const posList = document.getElementById('positions-list');
+                const noPos = document.getElementById('no-pos');
+                posList.innerHTML = '';
+                
+                const positions = data.positions || [];
+                if (positions.length === 0) {
+                    noPos.style.display = 'block';
+                } else {
+                    noPos.style.display = 'none';
+                    positions.forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${p.asset}</td>
+                            <td class="${p.side === 'LONG' ? 'side-long' : 'side-short'}">${p.side}</td>
+                            <td>${(p.size || 0).toFixed(3)}</td>
+                            <td>${(p.entry || 0).toFixed(4)}</td>
+                            <td class="${(p.pnl || 0) >= 0 ? 'pnl-pos' : 'pnl-neg'}">${(p.pnl || 0).toFixed(2)}%</td>
+                        `;
+                        posList.appendChild(tr);
+                    });
+                }
+
+                // Activity
+                const activities = data.recentActivities || [];
+                const log = document.getElementById('activity-log');
+                if (activities.length > 0) {
+                    log.innerHTML = activities.map(a => `
+                        <div class="log-item">
+                            <span class="log-time">${new Date(a.timestamp).toLocaleTimeString()}</span> 
+                            <span>${a.messageEn}</span>
                         </div>
-                        <div>${a.message_en}</div>
-                    </div>
-                `).join('');
+                    `).join('');
+                } else {
+                    log.innerHTML = '<div class="empty">No activity yet. Bot is scanning...</div>';
+                }
 
-            } catch (e) { console.error(e); }
+            } catch (err) {
+                document.getElementById('sync-status').innerText = "CONNECTION ERROR";
+                console.error("Fetch failed:", err);
+            }
         }
-        setInterval(refresh, 5000);
-        refresh();
+
+        // Auto update every 10 seconds
+        updateData();
+        setInterval(updateData, 10000);
     </script>
 </body>
 </html>

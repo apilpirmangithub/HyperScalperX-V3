@@ -80,61 +80,88 @@ export function volumeSurge(candles: Candle[], period: number): number {
 
 // --- MAIN STRATEGY: CHAMELEON SNIPER ---
 
+export let STRATEGY_CONFIG = {
+    zThreshold: 2.5,
+    volThreshold: 1.3,
+
+    rsiThresholdLow: 30,
+    rsiThresholdHigh: 70,
+    wickThreshold: 0.1,
+    tp: 1.0,
+
+    sl: 0.8
+};
+
+
+export function setStrategyConfig(config: any) {
+    STRATEGY_CONFIG = { ...STRATEGY_CONFIG, ...config };
+}
+
 /**
  * CHAMELEON SNIPER V3
  * Hunts for extreme statistical outliers combined with volume confirmation.
  */
+export function rsi(data: number[], period: number = 14): number[] {
+    const results: number[] = [];
+    if (data.length <= period) return new Array(data.length).fill(50);
+
+    for (let i = 0; i < data.length; i++) {
+        if (i < period) {
+            results.push(50);
+            continue;
+        }
+        
+        const slice = data.slice(i - period, i + 1);
+        let gains = 0;
+        let losses = 0;
+        
+        for (let j = 1; j < slice.length; j++) {
+            const diff = slice[j] - slice[j - 1];
+            if (diff >= 0) gains += diff;
+            else losses -= diff;
+        }
+        
+        const avgGain = gains / period;
+        const avgLoss = losses / period;
+        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        results.push(100 - (100 / (1 + rs)));
+    }
+    return results;
+}
+
+
 export function analyzeChameleonWick(candles: Candle[]): any {
-    if (candles.length < 30) return { direction: "NEUTRAL" };
+    if (candles.length < 50) return { direction: "NEUTRAL" };
 
     const current = candles[candles.length - 1];
     const closes = candles.map(c => c.c);
     
-    // 1. Z-Score Statistical Check (Must be 2.8+ StdDevs away from mean)
     const currentZ = zScore(closes, 20);
-    
-    // 2. Heavy Volume Surge Check (2.0x Average)
     const volRatio = volumeSurge(candles, 20);
 
-    // 3. 24-Hour Historical Context
-    const window24h = candles.slice(-96); 
+    const window24h = candles.slice(-96); // 24h on 15m timeframe
     const low24h = Math.min(...window24h.map(c => c.l));
     const high24h = Math.max(...window24h.map(c => c.h));
 
-    // 4. Wick Rejection Filter
     const totalLength = current.h - current.l;
-    const bodyTop = Math.max(current.o, current.c);
     const bodyBottom = Math.min(current.o, current.c);
-    const upperWick = current.h - bodyTop;
-    const lowerWick = bodyBottom - current.l;
-    const upperWickRatio = totalLength > 0 ? upperWick / totalLength : 0;
-    const lowerWickRatio = totalLength > 0 ? lowerWick / totalLength : 0;
+    const bodyTop = Math.max(current.o, current.c);
+    const lowerWickRatio = totalLength > 0 ? (bodyBottom - current.l) / totalLength : 0;
+    const upperWickRatio = totalLength > 0 ? (current.h - bodyTop) / totalLength : 0;
 
-    // --- TRIGGER LOGIC ---
+    // --- TRIGGER LOGIC: THE PREDATOR ARMY (Dynamic) ---
 
-    // LONG SNIPER: Panic Bottom
-    if (currentZ < -2.8 && volRatio >= 2.0 && upperWickRatio < 0.15 && current.c < low24h * 1.02) {
-        return { 
-            direction: "LONG",
-            confidence: 98,
-            zScore: currentZ,
-            volSurge: volRatio,
-            tp: 2.5, 
-            sl: 1.0  
-        };
+    // LONG
+    if (currentZ < -STRATEGY_CONFIG.zThreshold && volRatio > STRATEGY_CONFIG.volThreshold && lowerWickRatio > STRATEGY_CONFIG.wickThreshold) {
+        return { direction: "LONG", tp: STRATEGY_CONFIG.tp, sl: STRATEGY_CONFIG.sl, zScore: currentZ, volSurge: volRatio };
     }
 
-    // SHORT SNIPER: Fomo Top
-    if (currentZ > 2.8 && volRatio >= 2.0 && lowerWickRatio < 0.15 && current.c > high24h * 0.98) {
-        return { 
-            direction: "SHORT",
-            confidence: 98,
-            zScore: currentZ,
-            volSurge: volRatio,
-            tp: 2.5, 
-            sl: 1.0  
-        };
+    // SHORT
+    if (currentZ > STRATEGY_CONFIG.zThreshold && volRatio > STRATEGY_CONFIG.volThreshold && upperWickRatio > STRATEGY_CONFIG.wickThreshold) {
+        return { direction: "SHORT", tp: STRATEGY_CONFIG.tp, sl: STRATEGY_CONFIG.sl, zScore: currentZ, volSurge: volRatio };
     }
 
-    return { direction: "NEUTRAL" };
+
+    return { direction: "NEUTRAL", zScore: currentZ, volSurge: volRatio };
 }
+

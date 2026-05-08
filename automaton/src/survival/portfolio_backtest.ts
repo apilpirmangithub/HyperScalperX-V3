@@ -6,14 +6,14 @@ import { analyzeChameleonWick, setStrategyConfig } from "./technicals.js";
 
 async function runPortfolioBacktest() {
     const binance = new ccxt.binance({ options: { defaultType: 'future' } });
-    const assets = ["SOL", "ETH", "BTC", "NEAR", "AVAX", "OP", "ARB", "JTO", "TIA", "SUI", "LINK", "FET", "WLD", "AAVE", "LTC"];
+    const assets = ["1000PEPE", "WIF", "DOGE", "1000BONK", "1000SHIB", "1000FLOKI", "BOME", "PENDLE", "ORDI", "1000SATS", "JUP", "PYTH", "TIA", "SEI", "GALA"];
     const days = 30;
     const initialBalance = 1000;
     let balance = initialBalance;
     let openTrade: any = null;
     let tradeHistory: any[] = [];
 
-    console.log(`🚀 FETCHING TRUE 30 DAYS DATA FOR ${assets.length} ASSETS...`);
+    console.log(`🚀 RUNNING WILD BACKTEST (MEME & HYPE ASSETS) FOR 30 DAYS...`);
 
     const allData: any = {};
     for (const asset of assets) {
@@ -31,7 +31,7 @@ async function runPortfolioBacktest() {
     }
 
     const totalSteps = allData[assets[0]].length;
-    console.log(`\n⏳ Menjalankan simulasi di ${totalSteps} titik waktu (30 Hari)...\n`);
+    console.log(`\n⏳ Menjalankan simulasi di ${totalSteps} titik waktu (Wild 30 Hari)...\n`);
 
     for (let i = 100; i < totalSteps; i++) {
         if (openTrade) {
@@ -73,7 +73,7 @@ async function runPortfolioBacktest() {
     const totalPnl = balance - initialBalance;
 
     console.log("🏆 ═══════════════════════════════════════════════");
-    console.log("   PORTFOLIO BACKTEST SUMMARY (TRUE 30 DAYS JACKPOT)");
+    console.log("   PORTFOLIO BACKTEST SUMMARY (WILD JACKPOT 30 DAYS)");
     console.log("═══════════════════════════════════════════════");
     console.log(`💰 Initial Balance : $1000`);
     console.log(`📈 Final Balance   : $${balance.toFixed(2)}`);

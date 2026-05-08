@@ -77,11 +77,27 @@ export async function startHypeKingLoop(db: AutomatonDatabase, exchange: Exchang
 
     const updatePredators = async () => {
         try {
-            // FORCE: Use only the backtested assets, no dynamic scanning
-            predatorAssets = [...HYPE_KING.ASSETS];
-            log(`🎯 Focusing on Jackpot Assets: ${predatorAssets.join(", ")}`);
+            log("🔍 Scanning for High Volume Major Assets (Anti-Meme)...");
+            const topVol = await exchange.getVolumeTop(25);
+            
+            const memeBlacklist = ["DOGE", "WIF", "BOME", "MEME", "FLOKI", "PEPE", "SHIB", "BONK", "MYRO", "WLD"];
+            
+            // Filter: No memes, no "1000" prefixed coins, no stablecoins
+            const filtered = topVol.filter(asset => {
+                if (asset.startsWith("1000")) return false; // Binance Meme naming
+                if (memeBlacklist.includes(asset)) return false;
+                if (asset === "USDC" || asset === "FDUSD" || asset === "TUSD") return false;
+                return true;
+            });
+
+            // Combine core assets + top 5 filtered new assets
+            const uniqueAssets = Array.from(new Set([...HYPE_KING.ASSETS, ...filtered.slice(0, 5)]));
+            predatorAssets = uniqueAssets.slice(0, 20); // Max 20 assets for speed
+            
+            log(`🎯 Predator List Updated: ${predatorAssets.join(", ")}`);
         } catch (e) {
             log(`⚠️ Update Failed: ${e}`);
+            predatorAssets = [...HYPE_KING.ASSETS];
         }
     };
 

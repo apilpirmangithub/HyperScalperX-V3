@@ -32,17 +32,19 @@ export class BinanceExchange implements Exchange {
         const balance = await this.client.fetchBalance();
         const info = balance.info as any;
         
-        // USDT-M Futures specific parsing
-        const totalValue = parseFloat(balance.total['USDT'] || "0");
+        // Binance Futures Specific: info contains totalWalletBalance and totalMarginBalance
+        // totalMarginBalance is the real "Equity" (Wallet + Unrealized PnL)
+        const equity = parseFloat(info.totalMarginBalance || "0");
+        const walletBalance = parseFloat(info.totalWalletBalance || "0");
         const unrealizedPnl = parseFloat(info.totalUnrealizedProfit || "0");
-        const marginUsed = parseFloat(info.totalMarginBalance || "0") - parseFloat(info.availableBalance || "0");
+        const available = parseFloat(info.availableBalance || "0");
 
         return {
-            totalValue: totalValue,
-            accountValue: totalValue,
-            spotValue: 0, // Spot not tracked in futures mode here
-            withdrawable: parseFloat(info.availableBalance || "0"),
-            marginUsed: marginUsed,
+            totalValue: equity,
+            accountValue: walletBalance,
+            spotValue: 0,
+            withdrawable: available,
+            marginUsed: equity - available,
             unrealizedPnl: unrealizedPnl
         };
     }
@@ -83,6 +85,14 @@ export class BinanceExchange implements Exchange {
 
     async placeLimitOrder(asset: string, isBuy: boolean, size: number, price: number): Promise<any> {
         const symbol = `${asset}/USDT:USDT`;
+        
+        // BUG FIX: Ensure leverage is set to 20x (or whatever HYPE_KING.TRADING_LEVERAGE is)
+        try {
+            await this.client.setLeverage(20, symbol); 
+        } catch (e) {
+            // Ignore if already set or not supported
+        }
+
         const precisionPrice = this.client.priceToPrecision(symbol, price);
         const precisionSize = this.client.amountToPrecision(symbol, size);
         

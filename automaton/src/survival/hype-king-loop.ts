@@ -268,7 +268,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     margin_usdc: margin,
                     dynamic_tp: signal.tp,
                     dynamic_sl: signal.sl,
-                    status: "open",
+                    status: "open" as "open",
                     open_time: new Date().toISOString(),
                     confidence: 100,
                     tpsl_placed: false,

@@ -25,6 +25,15 @@ export class BinanceExchange implements Exchange {
     async init(): Promise<void> {
         // Load markets to get decimals and other info
         await this.client.loadMarkets();
+        
+        // BUG FIX: Ensure One-Way Mode (required for our reduceOnly logic)
+        try {
+            await this.client.setPositionsMode(false); // false = One-Way Mode
+            console.log(`[Binance] 🔄 Position Mode set to One-Way.`);
+        } catch (e) {
+            // Ignore if already set
+        }
+
         console.log(`[Binance] 🟢 Connected and markets loaded.`);
     }
 
@@ -86,12 +95,11 @@ export class BinanceExchange implements Exchange {
     async placeLimitOrder(asset: string, isBuy: boolean, size: number, price: number): Promise<any> {
         const symbol = `${asset}/USDT:USDT`;
         
-        // BUG FIX: Ensure leverage is set to 20x (or whatever HYPE_KING.TRADING_LEVERAGE is)
-        try {
-            await this.client.setLeverage(20, symbol); 
-        } catch (e) {
-            // Ignore if already set or not supported
-        }
+        // BUG FIX: Ensure leverage is set to 20x
+        try { await this.client.setLeverage(20, symbol); } catch (e) {}
+        
+        // BUG FIX: Ensure Margin Mode is CROSS (not Isolated)
+        try { await this.client.setMarginMode('CROSSED', symbol); } catch (e) {}
 
         const precisionPrice = this.client.priceToPrecision(symbol, price);
         const precisionSize = this.client.amountToPrecision(symbol, size);
@@ -106,6 +114,13 @@ export class BinanceExchange implements Exchange {
 
     async closePosition(asset: string, size: number, isBuy: boolean): Promise<any> {
         const symbol = `${asset}/USDT:USDT`;
+        
+        // BUG FIX: Clean up ALL open orders for this asset when closing
+        try {
+            await this.client.cancelAllOrders(symbol);
+            console.log(`[Binance] 🧹 Cleaned up all orders for ${asset}`);
+        } catch (e) {}
+
         const precisionSize = this.client.amountToPrecision(symbol, size);
         
         return await this.client.createMarketOrder(

@@ -1,47 +1,71 @@
-# 👑 HyperScalperX - Mass Edition
+# 👑 HyperScalperX - The Ultimate Predator (V11.7) 🦎
 
-Selamat datang di **HyperScalperX**, bot trading otomatis (Expert Advisor) yang dirancang khusus untuk pasar **Hyperliquid**. Bot ini menggunakan strategi *Chameleon Sniper* yang agresif namun aman untuk pertumbuhan saldo yang konsisten.
-
-## ✨ Fitur Unggulan
-- **Automatic Setup & Deploy**: Instalasi otomatis ke komputer lokal atau langsung ke VPS Anda.
-- **Locked Strategy**: Strategi (Leverage, TP, SL, Trailing) sudah dikunci oleh pengembang agar tetap menguntungkan (Gacor).
-- **Auto-Recovery**: Bisa melanjutkan posisi yang terputus jika VPS mati.
-- **Circuit Breaker**: Bot otomatis berhenti jika saldo turun di bawah batas aman (50% dari modal awal).
-- **Telegram Notifier**: Laporan jual-beli langsung ke HP Anda.
+**HyperScalperX** is a high-frequency, autonomous trading engine designed for **Binance Futures**. It utilizes the specialized **Chameleon Wick Sniper V3** strategy, optimized through rigorous 30-day multi-asset backtesting to capture high-probability liquidity wick rejections.
 
 ---
 
-## 🚀 Cara Instalasi (Sangat Mudah)
+## 💎 Key Features
 
-### 1. Persyaratan Sistem
-- Laptop/PC dengan **Node.js (versi 20 atau terbaru)**.
-- Jika ingin deploy ke VPS, pastikan Anda punya **Alamat IP** dan **Password** VPS (Ubuntu/Debian).
-
-### 2. Jalankan Setup & Auto-Deploy
-Buka terminal/CMD di dalam folder ini, lalu ketik:
-```bash
-node setup.mjs
-```
-Ikuti instruksi yang muncul di layar:
-- Masukkan **Private Key** akun Hyperliquid Anda.
-- **Auto-Deploy VPS**: Jika Anda memilih `y`, masukkan IP dan Password VPS Anda. Bot akan menginstal Node.js, PM2, dan menyalakan dirinya sendiri di VPS tersebut secara otomatis!
-
-### 3. Jalankan Secara Lokal (Jika tidak pakai VPS)
-Jika Anda hanya ingin menjalankan di komputer sendiri, ketik:
-```bash
-npm start
-```
+- **🎯 Sniper Entry (Market Flow)**: Uses instant Market Orders to capture fast-moving liquidity wicks, ensuring a 100% fill rate for "Jackpot" signals.
+- **📈 Unleashed Trailing Stop**: Features a dynamic trailing mechanism that captures extended moves beyond fixed targets. Starts trailing at **1.2%** with a **0.5%** callback.
+- **🛡️ Zero-Gap Protection**: Automatically places a Hard Stop Loss (1.0%) on the exchange the millisecond a trade is opened, eliminating the "Death Zone" vulnerability.
+- **⚡ Autonomous Lifecycle**: Designed to run 24/7 on a VPS with zero manual intervention. Includes auto-recovery, pm2 integration, and self-healing exchange synchronization.
+- **🏦 Exchange Harmony**: Automatically forces Binance accounts into **One-Way Mode** and **Cross Margin**, while performing a total cleanup of stale orders after every trade.
+- **🖥️ Real-time Dashboard**: Integrated with Firebase for a high-fidelity, low-latency performance dashboard.
+- **📡 Telegram Interactive Control**: Fully controllable via Telegram with commands: `/status`, `/list`, `/balance`, and `/stop` (Emergency Killswitch).
 
 ---
 
-## 🛡️ Keamanan & Aturan Main
-1. **Strategi**: Bot menggunakan leverage 10x dan alokasi margin 40%. Ini adalah settingan optimal yang sudah dikunci oleh pengembang.
-2. **Stop Loss**: Setiap posisi dilindungi Stop Loss 1.3% langsung di bursa.
-3. **Trailing Profit**: Bot akan mengamankan keuntungan (TP) secara otomatis saat profit sudah mencapai 1.7% dan mengalami koreksi 0.5%.
+## 🦎 The "Jackpot" Strategy (V8 Optimized)
+
+Based on 30 days of historical data research, the bot is locked into the following "Golden Ratio" parameters:
+- **Z-Score Threshold**: `2.6`
+- **Wick Rejection**: `0.05`
+- **Minimum Target**: `1.2%`
+- **Stop Loss**: `1.0%`
+- **Asset List**: 15 Top Crypto Assets (SOL, ETH, BTC, NEAR, AVAX, etc.)
 
 ---
 
-## 📞 Dukungan
-Hubungi pengembang (Admin) jika Anda mengalami kendala teknis atau ingin melakukan aktivasi lisensi.
+## 🚀 Quick Start (VPS Deployment)
 
-**Happy Trading & Cuan Barokah!** 💰🚀
+1. **Environment Setup**:
+   Create a `.env` file with your credentials:
+   ```env
+   EXCHANGE_TYPE=binance
+   BINANCE_API_KEY=your_key
+   BINANCE_API_SECRET=your_secret
+   TELEGRAM_BOT_TOKEN=your_token
+   TELEGRAM_CHAT_ID=your_id
+   FIREBASE_SERVICE_ACCOUNT=/root/firebase-key.json
+   FIREBASE_DB_URL=your_db_url
+   ```
+
+2. **Deploy**:
+   ```bash
+   npm run build
+   node deploy_to_binance_vps.mjs
+   ```
+
+3. **Monitor**:
+   Check logs on VPS:
+   ```bash
+   pm2 logs HypeKing
+   ```
+
+---
+
+## 🛡️ Risk Management
+
+- **Circuit Breaker**: The bot will automatically halt all activities if the account balance drops below **$5.00**.
+- **Lot Size Control**: Margin is dynamically calculated as **40%** of the available equity per trade.
+- **Order Cleanup**: Ensures no "Ghost SL/TP" orders remain active after a trade is concluded.
+
+---
+
+## ⚠️ Disclaimer
+This is a high-risk autonomous trading system. Use it with caution and only with capital you can afford to lose. The developers are not responsible for any financial losses.
+
+---
+
+**Developed with 💎 by HyperScalperX Team**

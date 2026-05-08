@@ -80,12 +80,12 @@ export async function startHypeKingLoop(db: AutomatonDatabase, exchange: Exchang
             log("🔍 Scanning for High Volume Major Assets (Anti-Meme)...");
             const topVol = await exchange.getVolumeTop(25);
             
-            const memeBlacklist = ["DOGE", "WIF", "BOME", "MEME", "FLOKI", "PEPE", "SHIB", "BONK", "MYRO", "WLD"];
+            const assetBlacklist = ["DOGE", "WIF", "BOME", "MEME", "FLOKI", "PEPE", "SHIB", "BONK", "MYRO", "WLD", "XAU", "XAG", "CL", "OIL"];
             
-            // Filter: No memes, no "1000" prefixed coins, no stablecoins
+            // Filter: No memes, no commodities, no "1000" prefixed coins, no stablecoins
             const filtered = topVol.filter(asset => {
                 if (asset.startsWith("1000")) return false; // Binance Meme naming
-                if (memeBlacklist.includes(asset)) return false;
+                if (assetBlacklist.includes(asset)) return false;
                 if (asset === "USDC" || asset === "FDUSD" || asset === "TUSD") return false;
                 return true;
             });

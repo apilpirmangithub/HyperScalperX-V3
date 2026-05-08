@@ -22,28 +22,32 @@ export function getConfigPath(): string {
  */
 export function loadConfig(): AutomatonConfig | null {
   const configPath = getConfigPath();
-  if (!fs.existsSync(configPath)) {
-    return null;
+  let raw: any = {};
+  
+  if (fs.existsSync(configPath)) {
+    try {
+      raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    } catch (e) {}
   }
 
-  try {
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    const config = {
-      ...DEFAULT_CONFIG,
-      ...raw,
-    } as AutomatonConfig;
+  const config = {
+    ...DEFAULT_CONFIG,
+    ...raw,
+  } as AutomatonConfig;
 
-    // Overwrite with ENV if present
-    if (process.env.EXCHANGE_TYPE) config.exchangeType = process.env.EXCHANGE_TYPE as any;
-    if (process.env.BINANCE_API_KEY) config.binanceApiKey = process.env.BINANCE_API_KEY;
-    if (process.env.BINANCE_API_SECRET) config.binanceApiSecret = process.env.BINANCE_API_SECRET;
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) config.firebaseServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (process.env.FIREBASE_DB_URL) config.firebaseDbUrl = process.env.FIREBASE_DB_URL;
+  // Overwrite with ENV if present (Critical for VPS/Docker)
+  if (process.env.EXCHANGE_TYPE) config.exchangeType = process.env.EXCHANGE_TYPE as any;
+  if (process.env.BINANCE_API_KEY) config.binanceApiKey = process.env.BINANCE_API_KEY;
+  if (process.env.BINANCE_API_SECRET) config.binanceApiSecret = process.env.BINANCE_API_SECRET;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) config.firebaseServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (process.env.FIREBASE_DB_URL) config.firebaseDbUrl = process.env.FIREBASE_DB_URL;
+  if (process.env.TELEGRAM_BOT_TOKEN) config.telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (process.env.TELEGRAM_CHAT_ID) config.telegramChatId = process.env.TELEGRAM_CHAT_ID;
 
-    return config;
-  } catch {
-    return null;
-  }
+  // If we have at least an exchange type, we consider it a valid config
+  if (!config.exchangeType) return null;
+
+  return config;
 }
 
 /**

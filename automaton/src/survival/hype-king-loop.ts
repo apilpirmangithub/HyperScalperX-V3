@@ -246,7 +246,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
             // ENSURE WE HAVE ENOUGH MARGIN
             if (bal.withdrawable < margin) {
                 log(`⚠️ Insufficient Margin: Need $${margin.toFixed(2)}, Have $${bal.withdrawable.toFixed(2)}`);
-                continue;
+                return;
             }
 
             const result = await (exchange as any).client.createMarketOrder(

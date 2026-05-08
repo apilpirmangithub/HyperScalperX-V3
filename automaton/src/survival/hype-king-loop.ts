@@ -259,7 +259,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                 const actualEntryPrice = result.average || result.price || midPx;
                 log(`🎯 Market Entry Executed: ${asset} ${direction} @ ${actualEntryPrice} (Size: ${sizeAsset.toFixed(4)})`);
                 
-                db.insertTrade({
+                const tradeRecord = {
                     id: `hk_${Date.now()}`,
                     market: asset,
                     side: direction,
@@ -273,9 +273,24 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     confidence: 100,
                     tpsl_placed: false,
                     tpsl_retries: 0
-                });
+                };
+                
+                db.insertTrade(tradeRecord);
                 await logActivity(db, "ENTRY", `Opened ${direction} ${asset}`, `Entry ${asset}`);
-                await sendTelegramMessage(`🚀 <b>OPEN ${direction}: ${asset}</b>\nPrice: ${midPx.toFixed(4)}\nMargin: $${margin.toFixed(2)}`);
+                await sendTelegramMessage(`🚀 <b>OPEN ${direction}: ${asset}</b>\nPrice: ${actualEntryPrice.toFixed(4)}\nMargin: $${margin.toFixed(2)}`);
+
+                // ZERO-GAP PROTECTION: Place SL Immediately!
+                try {
+                    const slPrice = direction === "LONG" ? actualEntryPrice * (1 - (signal.sl / 100)) : actualEntryPrice * (1 + (signal.sl / 100));
+                    log(`🛡️ Immediate Protection: Placing Hard SL for ${asset} at ${signal.sl}% ($${slPrice.toFixed(4)})...`);
+                    const res = await exchange.placeTPSLOrders(asset, sizeAsset, direction === "LONG", 0, slPrice);
+                    if (res.status === "ok") {
+                        db.updateTrade({ id: tradeRecord.id, tpsl_placed: true, nuclear_sl: slPrice });
+                        log(`✅ Protection Active for ${asset}.`);
+                    }
+                } catch (e: any) {
+                    log(`⚠️ Immediate SL Placement Failed: ${e.message}. Bot will retry in next loop.`);
+                }
             }
         }
     }

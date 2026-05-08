@@ -70,22 +70,18 @@ export async function startHypeKingLoop(db: AutomatonDatabase, exchange: Exchang
     if (startBal) {
         const initialRealized = startBal.totalValue - (startBal.unrealizedPnl || 0);
         (HYPE_KING as any).peakBalance = initialRealized;
-        (HYPE_KING as any).autoStopThreshold = initialRealized * 0.50; 
+        (HYPE_KING as any).autoStopThreshold = 5; 
         log(`💰 [Balance] Total: $${startBal.totalValue.toFixed(2)} | Realized: $${initialRealized.toFixed(2)}`);
         log(`🛡️ [Safety] Circuit Breaker at $${(HYPE_KING as any).autoStopThreshold.toFixed(2)}`);
     }
 
     const updatePredators = async () => {
         try {
-            log("🔍 Scanning for High Volume Predators...");
-            const sorted = await exchange.getVolumeTop(15);
-            
-            const blacklist = ["CHIP", "MEGA", "BIO"];
-            predatorAssets = sorted.filter(a => !blacklist.includes(a));
-            exchange.subscribeToPrices(predatorAssets);
-            log(`🎯 Predator List Updated: ${predatorAssets.join(", ")}`);
+            // FORCE: Use only the backtested assets, no dynamic scanning
+            predatorAssets = [...HYPE_KING.ASSETS];
+            log(`🎯 Focusing on Jackpot Assets: ${predatorAssets.join(", ")}`);
         } catch (e) {
-            log(`⚠️ Scan Failed: ${e}`);
+            log(`⚠️ Update Failed: ${e}`);
         }
     };
 

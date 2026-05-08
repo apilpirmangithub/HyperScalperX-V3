@@ -168,6 +168,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                         close_time: new Date().toISOString(),
                         close_reason: "trailing_stop" 
                     });
+                    await sendTelegramMessage(`💰 <b>TRAILING TP: ${pos.asset}</b>\nProfit: ${pnlPct.toFixed(2)}%\nPeak: ${peakPnl.toFixed(2)}%`);
                     continue;
                 }
 
@@ -181,18 +182,6 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     trade.tpsl_placed = false; 
                 }
 
-                // TRAILING LOGIC
-                const trailingStart = HYPE_KING.trailingStart;
-                const callback = HYPE_KING.trailingCallback;
-
-                if (currentPeak >= trailingStart) {
-                    if (pnlPct < currentPeak - callback) {
-                        log(`🔥 Trailing TP Triggered for ${pos.asset} at ${pnlPct.toFixed(2)}% (Peak: ${currentPeak.toFixed(2)}%)`);
-                        await exchange.closePosition(pos.asset, pos.size, !isLong);
-                        await sendTelegramMessage(`💰 <b>TRAILING TP: ${pos.asset}</b>\nProfit: ${pnlPct.toFixed(2)}%\nPeak: ${currentPeak.toFixed(2)}%`);
-                        continue;
-                    }
-                }
 
                 // Ensure Hard SL is still there (1.3%)
                 if (!trade.tpsl_placed) {

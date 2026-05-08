@@ -81,15 +81,13 @@ export function volumeSurge(candles: Candle[], period: number): number {
 // --- MAIN STRATEGY: CHAMELEON SNIPER ---
 
 export let STRATEGY_CONFIG = {
-    zThreshold: 2.5,
+    zThreshold: 2.6,
     volThreshold: 1.3,
-
     rsiThresholdLow: 30,
     rsiThresholdHigh: 70,
-    wickThreshold: 0.1,
-    tp: 1.0,
-
-    sl: 0.8
+    wickThreshold: 0.05,
+    tp: 1.2,
+    sl: 1.0
 };
 
 

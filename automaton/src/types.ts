@@ -70,7 +70,7 @@ export interface TradeEntry {
   close_time?: string;
   close_reason?: string;
   confidence?: number;
-  trail_peak?: number;
+  peak_pnl?: number;
   tpsl_placed?: boolean;
   tpsl_retries?: number;
   soft_sl?: number;

@@ -10,12 +10,14 @@ import { loadWalletAccount } from "../identity/wallet.js";
 import type { AutomatonDatabase } from "../types.js";
 
 // ─── THE CHAMELEON PREDATOR Config 🦎 ───────────────────────
+// ─── THE CHAMELEON PREDATOR Config 🦎 ───────────────────────
 export const HYPE_KING = {
-    ASSETS: ["SOL", "SEI", "WLD", "AAVE", "AVAX", "NEAR", "OP", "ARB", "FET", "PEPE"], 
+    ASSETS: ["SOL", "ETH", "BTC", "NEAR", "AVAX", "OP", "ARB", "JTO", "TIA", "SUI", "LINK", "FET", "WLD", "AAVE", "LTC"], 
     predatorLimit: 40,
     marginPortion: 0.40,        
     TRADING_LEVERAGE: 20,       
     MAX_DROP_THRESHOLD: -3.5,   
+    autoStopThreshold: 5,       // Jika saldo drop ke $5, bot stop total
     scanInterval: 30 * 1000,    
     orderTimeout: 2 * 60 * 1000,
     trailingStart: 1.5,         
@@ -148,14 +150,30 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                 const mid = await exchange.getMidPrice(pos.asset);
                 const pnlPct = ((mid - trade.entry_price) / trade.entry_price * 100) * (isLong ? 1 : -1);
                 
-                // Track peak for Trailing TP
-                const currentPeak = (trade as any).peak_pnl || 0;
-                if (pnlPct > currentPeak) {
-                    db.updateTrade({ id: trade.id, peak_pnl: pnlPct } as any);
+                // --- TRAILING STOP LOGIC ---
+                const peakPnl = trade.peak_pnl || 0;
+                if (pnlPct > peakPnl) {
+                    db.updateTrade({ id: trade.id, peak_pnl: pnlPct });
+                }
+
+                // Trigger: If profit hit 1.5% and then drops 0.5% from peak
+                if (peakPnl >= 1.5 && (peakPnl - pnlPct) >= 0.5) {
+                    log(`🔥 Trailing Stop Triggered for ${pos.asset}: Peak ${peakPnl.toFixed(2)}%, Current ${pnlPct.toFixed(2)}%`);
+                    await exchange.closePosition(pos.asset, pos.size, !isLong); // Close the position
+                    db.updateTrade({ 
+                        id: trade.id, 
+                        status: "closed", 
+                        close_price: mid, 
+                        pnl_pct: pnlPct, 
+                        close_time: new Date().toISOString(),
+                        close_reason: "trailing_stop" 
+                    });
+                    continue;
                 }
 
                 // Self-Healing SL
                 const hasExchangeSL = exchangeOrders.some((o: any) => o.coin === pos.asset && o.reduceOnly === true);
+
                 
                 if (!hasExchangeSL) {
                     log(`⚠️ SL missing on exchange for ${pos.asset}, preparing to re-place...`);
@@ -178,20 +196,22 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
 
                 // Ensure Hard SL is still there (1.3%)
                 if (!trade.tpsl_placed) {
-                    const slPrice = isLong ? trade.entry_price * 0.987 : trade.entry_price * 1.013;
+                    const tpPrice = isLong ? trade.entry_price * (1 + (trade.dynamic_tp / 100)) : trade.entry_price * (1 - (trade.dynamic_tp / 100));
+                    const slPrice = isLong ? trade.entry_price * (1 - (trade.dynamic_sl / 100)) : trade.entry_price * (1 + (trade.dynamic_sl / 100));
+                    
                     try {
                         const stale = exchangeOrders.filter((o: any) => o.coin === pos.asset);
                         for (const s of stale) {
                             await exchange.cancelOrder(s.coin, s.oid);
                         }
 
-                        log(`🛡️ Placing Hard SL for ${pos.asset} at 1.3% ($${slPrice.toFixed(4)})...`);
-                        const res = await exchange.placeTPSLOrders(pos.asset, pos.size, isLong, 0, slPrice); 
+                        log(`🛡️ Placing Hard TP/SL for ${pos.asset} (TP: ${trade.dynamic_tp}%, SL: ${trade.dynamic_sl}%)...`);
+                        const res = await exchange.placeTPSLOrders(pos.asset, pos.size, isLong, tpPrice, slPrice); 
                         if (res.status === "ok") {
                             db.updateTrade({ id: trade.id, tpsl_placed: true, nuclear_sl: slPrice });
                         }
                     } catch (e: any) {
-                        log(`❌ SL Placement Failed for ${pos.asset}: ${e.message}`);
+                        log(`❌ TP/SL Placement Failed for ${pos.asset}: ${e.message}`);
                     }
                 }
             }

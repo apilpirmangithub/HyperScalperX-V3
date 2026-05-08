@@ -20,7 +20,7 @@ export const HYPE_KING = {
     autoStopThreshold: 5,       // Jika saldo drop ke $5, bot stop total
     scanInterval: 30 * 1000,    
     orderTimeout: 2 * 60 * 1000,
-    trailingStart: 1.5,         
+    trailingStart: 1.2,         
     trailingCallback: 0.5       
 };
 
@@ -156,8 +156,8 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     db.updateTrade({ id: trade.id, peak_pnl: pnlPct });
                 }
 
-                // Trigger: If profit hit 1.5% and then drops 0.5% from peak
-                if (peakPnl >= 1.5 && (peakPnl - pnlPct) >= 0.5) {
+                // Trigger: If profit hit trailingStart and then drops callback from peak
+                if (peakPnl >= HYPE_KING.trailingStart && (peakPnl - pnlPct) >= HYPE_KING.trailingCallback) {
                     log(`🔥 Trailing Stop Triggered for ${pos.asset}: Peak ${peakPnl.toFixed(2)}%, Current ${pnlPct.toFixed(2)}%`);
                     await exchange.closePosition(pos.asset, pos.size, !isLong); // Close the position
                     db.updateTrade({ 
@@ -185,7 +185,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
 
                 // Ensure Hard SL is still there (1.3%)
                 if (!trade.tpsl_placed) {
-                    const tpPrice = isLong ? trade.entry_price * (1 + (trade.dynamic_tp / 100)) : trade.entry_price * (1 - (trade.dynamic_tp / 100));
+                    const tpPrice = 0; // DISABLE HARD TP to allow Trailing
                     const slPrice = isLong ? trade.entry_price * (1 - (trade.dynamic_sl / 100)) : trade.entry_price * (1 + (trade.dynamic_sl / 100));
                     
                     try {
@@ -194,7 +194,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                             await exchange.cancelOrder(s.coin, s.oid);
                         }
 
-                        log(`🛡️ Placing Hard TP/SL for ${pos.asset} (TP: ${trade.dynamic_tp}%, SL: ${trade.dynamic_sl}%)...`);
+                        log(`🛡️ Placing Hard SL for ${pos.asset} (SL: ${trade.dynamic_sl}%)...`);
                         const res = await exchange.placeTPSLOrders(pos.asset, pos.size, isLong, tpPrice, slPrice); 
                         if (res.status === "ok") {
                             db.updateTrade({ id: trade.id, tpsl_placed: true, nuclear_sl: slPrice });

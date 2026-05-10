@@ -592,17 +592,20 @@
             isCustomActive = true;
             customPrompt = prompt;
             
-            // UI setup for custom agent
-            document.getElementById('p5').style.display = 'flex';
-            document.getElementById('customName').innerText = "VANGUARD-X"; // Default custom name
+            // UI confirmation on landing page
+            const btn = document.querySelector('.agent-forge-container button');
+            btn.innerText = "✅ AGENT VANGUARD-X DEPLOYED TO SOMNIA EVM";
+            btn.style.background = "var(--green)";
+            btn.disabled = true;
             
-            // Proceed to app
-            landing.style.opacity = '0';
-            document.getElementById('toggle-sidebar').style.display = 'block';
-            await sleep(500);
-            landing.style.display = 'none';
-            mainContainer.style.display = 'grid';
-            startComicStory('AGGRESSIVE'); // Default profile for custom agents
+            document.getElementById('forgePrompt').disabled = true;
+            document.getElementById('forgePrompt').style.borderColor = "var(--green)";
+            
+            // Setup hidden panel for later
+            document.getElementById('p5').style.display = 'flex';
+            document.getElementById('customName').innerText = "VANGUARD-X";
+            
+            console.log("[FORGE] Custom Agent logic initialized based on prompt:", prompt);
         }
 
         async function showAction(text, x, y) {
@@ -658,8 +661,15 @@
             }
 
             if (agentKey === 'CUSTOM') {
-                const analysis = isDefiProposed ? "yield" : "trading momentum";
-                return `[CUSTOM/LLM] Berdasarkan instruksi Anda (${customPrompt}), saya menilai ${analysis} pada ${coin} ini ${rsi > 50 ? 'sangat menjanjikan' : 'perlu diwaspadai'}. Trust Score: ${trustPoints}.`;
+                const analysis = isDefiProposed ? "pool yield" : "pergerakan trading";
+                let personality = "Analytical";
+                let tone = "mengonfirmasi";
+
+                if (customPrompt.toLowerCase().includes("skeptis")) { personality = "Skeptical"; tone = "mempertanyakan stabilitas"; }
+                if (customPrompt.toLowerCase().includes("agresif")) { personality = "Aggressive"; tone = "mendorong eksekusi cepat"; }
+                if (customPrompt.toLowerCase().includes("aman") || customPrompt.toLowerCase().includes("safety")) { personality = "Preservation"; tone = "menyarankan kehati-hatian"; }
+
+                return `[VANGUARD-X/${personality}] Sebagai agen kustom Anda, saya ${tone} pada ${analysis} ${coin} ini. Berdasarkan instruksi '${customPrompt}', saya menilai skor keyakinan @${rsi > 50 ? 'HIGH' : 'LOW'}.`;
             }
 
             // AGEN4 Final Decision

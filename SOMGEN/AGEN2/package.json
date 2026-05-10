@@ -1,0 +1,10 @@
+{
+  "name": "agen2-onchain",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@types/ws": "^8.18.1",
+    "ccxt": "^4.2.82",
+    "ws": "^8.20.0"
+  }
+}

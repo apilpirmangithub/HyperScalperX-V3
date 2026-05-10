@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOMGEN PREDATOR - Comic Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Outfit:wght@400;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #ff3e3e;
+            --blue: #00a8ff;
+            --yellow: #fbc531;
+            --green: #4cd137;
+            --purple: #9c88ff;
+            --bg: #000000;
+            --text: #ffffff;
+            --text-muted: #888;
+            --border: #fff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Comic Halftone Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(#fff 0.5px, transparent 0.5px);
+            background-size: 8px 8px;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #landing {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: 0.8s;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            background: var(--bg);
+        }
+
+        .comic-title {
+            font-family: 'Bangers', cursive;
+            font-size: 8rem;
+            color: var(--yellow);
+            text-shadow: 8px 8px 0px var(--red), 15px 15px 0px #000;
+            transform: rotate(-5deg);
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 2rem;
+            color: var(--blue);
+            margin-bottom: 40px;
+            transform: rotate(-2deg);
+        }
+
+        .input-box {
+            background: #fff;
+            padding: 10px 30px;
+            border: 5px solid #000;
+            border-radius: 0;
+            width: 500px;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 1.2rem;
+            color: #000;
+            box-shadow: 10px 10px 0px var(--blue);
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .agent-forge-container {
+            margin-top: 40px;
+            background: #000;
+            padding: 20px;
+            border: 4px dashed var(--yellow);
+            width: 800px;
+            text-align: left;
+        }
+
+        .forge-title {
+            color: var(--yellow);
+            font-family: 'Bangers', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .agent-list-showcase {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .agent-mini-card {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            padding: 10px;
+            font-size: 0.7rem;
+        }
+
+        /* Comic Page Layout with Sidebar */
+        #main-container {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            display: grid;
+            grid-template-columns: 1fr 380px; 
+            background: #fff;
+            border: 10px solid #000;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #main-container.sidebar-hidden {
+            grid-template-columns: 1fr 0px;
+            border-right: 10px solid #000;
+        }
+
+        #comic-page {
+            display: grid;
+            height: calc(100vh - 20px);
+            padding: 15px;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            background: #fff; 
+            border-right: 10px solid #000;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            background: #000;
+            color: #fff;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.5);
+            overflow-y: auto;
+            position: relative;
+            transition: 0.5s;
+        }
+
+        #main-container.sidebar-hidden #sidebar {
+            transform: translateX(380px);
+            padding: 0;
+            opacity: 0;
+        }
+
+        /* Toggle Button Styling */
+        #toggle-sidebar {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 2000;
+            background: var(--red);
+            color: #fff;
+            border: 4px solid #000;
+            font-family: 'Bangers', cursive;
+            padding: 8px 15px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #000;
+            transition: 0.2s;
+        }
+
+        #toggle-sidebar:hover { transform: scale(1.1); }
+        #toggle-sidebar:active { transform: translateY(4px) translateX(4px); box-shadow: 0 0 0 #000; }
+
+
+        #sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(#333 1px, transparent 1px);
+            background-size: 10px 10px;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .sidebar-title {
+            font-family: 'Bangers', cursive;
+            font-size: 2.5rem;
+            color: var(--yellow);
+            text-align: center;
+            border-bottom: 4px solid var(--red);
+            padding-bottom: 10px;
+            transform: rotate(-1deg);
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            border: 3px solid var(--blue);
+            padding: 15px;
+            font-family: 'Permanent Marker', cursive;
+        }
+
+        .stat-label { font-size: 1rem; color: var(--blue); margin-bottom: 5px; }
+        .stat-value { font-size: 1.8rem; color: #fff; }
+
+        .mission-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mission-card {
+            border: 4px solid #333;
+            padding: 15px;
+            position: relative;
+            background: #0a0a0a;
+            transition: 0.3s;
+        }
+
+        .mission-card.active {
+            border-color: var(--green);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .mission-header {
+            font-family: 'Bangers', cursive;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mission-status {
+            font-size: 0.9rem;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        .mission-card.active .mission-status { color: var(--green); }
+
+        .mission-desc {
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.2;
+        }
+
+        /* Panel Styling */
+        .panel {
+            background: #000;
+            border: 6px solid #000;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .panel.active { opacity: 1; transform: translateY(0); }
+
+        .panel.speaking {
+            border-color: var(--yellow);
+            box-shadow: 0 0 30px var(--yellow);
+            z-index: 50;
+            transform: scale(1.02);
+            animation: comic-pulse 1s infinite alternate;
+        }
+
+        @keyframes comic-pulse {
+            from { box-shadow: 0 0 10px var(--yellow); }
+            to { box-shadow: 0 0 40px var(--yellow); }
+        }
+
+        .panel-media {
+            flex: 1;
+            width: 100%;
+            background-color: #222;
+            overflow: hidden;
+        }
+
+        .panel-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.2) brightness(0.9);
+        }
+
+        .panel-footer {
+            background: var(--yellow);
+            color: #000;
+            padding: 15px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.4rem;
+            border-top: 5px solid #000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .panel-avatar {
+            width: 60px; height: 60px;
+            border: 3px solid #000;
+            background: #fff;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            bottom: 80px; left: 20px; right: 20px;
+            background: #fff;
+            border: 4px solid #000;
+            padding: 15px;
+            color: #000;
+            font-weight: 900;
+            font-size: 1rem;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 25% 75%, 10% 100%, 15% 75%, 0% 75%);
+            display: none;
+            z-index: 10;
+        }
+
+        .action-word {
+            position: absolute;
+            font-family: 'Bangers', cursive;
+            font-size: 4rem;
+            color: #fff;
+            text-shadow: 4px 4px 0 var(--red), -2px -2px 0 var(--blue);
+            z-index: 20;
+            pointer-events: none;
+            display: none;
+        }
+
+        #final-modal {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-2deg);
+            background: var(--purple);
+            border: 8px solid #000;
+            padding: 40px;
+            color: white;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 20px 20px 0px var(--yellow);
+        }
+
+        #final-modal h2 { font-family: 'Bangers', cursive; font-size: 5rem; text-shadow: 4px 4px 0 #000;}
+
+        .live-tag {
+            position: absolute;
+            top: 10px; left: 10px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 2px 8px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 3px;
+            animation: blink 1s infinite;
+            z-index: 5;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .panel-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="landing">
+        <h1 class="comic-title">SOMGEN PREDATOR</h1>
+        <p class="subtitle" style="margin-bottom:20px;">AUTONOMOUS AGENTIC L1 ENGINE</p>
+        
+        <!-- AGENT SHOWCASE -->
+        <div class="agent-forge-container">
+            <div class="forge-title">CORE COUNCIL MEMBERS:</div>
+            <div class="agent-list-showcase">
+                <div class="agent-mini-card"><b style="color:var(--blue)">AGEN1:</b> Technical Sniper. DIA Oracle expert.</div>
+                <div class="agent-mini-card"><b style="color:var(--red)">AGEN2:</b> Whale Hunter. Smart money tracker.</div>
+                <div class="agent-mini-card"><b style="color:var(--yellow)">AGEN3:</b> Social Radar. Sentiment & Safety.</div>
+                <div class="agent-mini-card"><b style="color:var(--purple)">AGEN4:</b> The Judge. Final execution unit.</div>
+            </div>
+
+            <div class="forge-title">FORGE CUSTOM AGENT (SOMNIA LLM):</div>
+            <textarea id="forgePrompt" placeholder="Tulis instruksi untuk agen ke-5 Anda... (Contoh: 'Jadilah analis yang skeptis terhadap pool dengan TVL rendah')" style="width: 100%; height: 60px; background: #222; color: #fff; border: 2px solid var(--blue); padding: 10px; font-family: 'Permanent Marker', cursive; margin-bottom: 10px; outline:none; font-size:0.9rem;"></textarea>
+            <button onclick="forgeAgent()" style="width: 100%; background: var(--blue); color: #fff; border: none; padding: 10px; font-family: 'Bangers'; font-size: 1.2rem; cursor: pointer; box-shadow: 4px 4px 0 #000;">ACTIVATE CUSTOM AGENT & START MISSION</button>
+        </div>
+
+        <p style="margin-top: 30px; font-family: 'Permanent Marker'; color: #666;">ATAU PILIH MODE STANDAR:</p>
+        <input type="text" class="input-box" id="chat-input" placeholder="KETIK AGGRESSIVE / NORMAL / SAFETY">
+    </div>
+
+    <button id="toggle-sidebar" onclick="toggleSidebar()" style="display: none;">STATS: ON</button>
+
+    <div id="main-container" style="display: none;">
+        <div id="comic-page">
+            <!-- Panel 1: AGEN1 Technicals -->
+            <div class="panel" id="p1">
+                <div class="panel-media">
+                    <img id="evidence1" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8vAtC76U3uS7877rXz/giphy.gif" alt="Chart">
+                    <div class="live-tag">LIVE CHART FEED</div>
+                </div>
+                <div class="speech-bubble" id="b1">SCANNING TECHNICALS...</div>
+                <div class="panel-footer" style="background: var(--blue);">
+                    <img class="panel-avatar" src="https://cdn-icons-png.flaticon.com/512/3534/3534065.png">
+                    AGEN1: SANG TEKNISI
+                </div>
+            </div>
+
+            <!-- Panel 2: AGEN2 On-Chain -->
+            <div class="panel" id="p2">
+                <div class="panel-media">
+                    <img id="evidence2" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWp5NWc4eHpjZ25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uS071hlk6FcrGEF36p/giphy.gif" alt="Whale">
+                    <div class="live-tag">SOMNIA MEMPOOL</div>
+                </div>
+                <div class="speech-bubble" id="b2">TRACKING WHALES...</div>
+                <div class="panel-footer" style="background: var(--yellow);">
+                    <img class="panel-avatar" src="https://cdn-icons-png.flaticon.com/512/2618/2618576.png">
+                    AGEN2: SANG INTEL ON-CHAIN
+                </div>
+            </div>
+
+            <!-- Panel 3: AGEN3 Fundamentals -->
+            <div class="panel" id="p3">
+                <div class="panel-media">
+                    <img id="evidence3" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGhjdXU5YmJnY25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lopx9eUi34rbq/giphy.gif" alt="News">
+                    <div class="live-tag">SOCIAL SCOUT FEED</div>
+                </div>
+                <div class="speech-bubble" id="b3">SCRAPING SENTIMENT...</div>
+                <div class="panel-footer" style="background: var(--red); color: white;">
+                    <img class="panel-avatar" src="https://cdn-icons-png.flaticon.com/512/3242/3242257.png">
+                    AGEN3: SANG FUNDAMENTALIS
+                </div>
+            </div>
+
+            <!-- Panel 4: AGEN4 The Executor -->
+            <div class="panel" id="p4">
+                <div class="panel-media">
+                    <img id="evidence4" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/a3fV9o23qWcI8/giphy.gif" alt="General">
+                    <div class="live-tag">VAULT COMMAND</div>
+                </div>
+                <div class="speech-bubble" id="b4">AWAITING CONSENSUS...</div>
+                <div class="panel-footer" style="background: var(--purple); color: white;">
+                    <img class="panel-avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
+                    AGEN4: SANG EKSEKUTOR
+                </div>
+            </div>
+
+            <!-- Panel 5: CUSTOM AGENT (HIDDEN BY DEFAULT) -->
+            <div class="panel" id="p5" style="display: none; border-color: var(--yellow);">
+                <div class="panel-media">
+                    <img id="evidence5" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lopx9eUi34rbq/giphy.gif" alt="Custom Agent">
+                    <div class="live-tag" id="customTag">SOMNIA LLM AGENT</div>
+                    <div style="position:absolute; top:10px; right:10px; background:var(--yellow); color:#000; padding:2px 5px; font-weight:bold; font-size:0.7rem; border:2px solid #000;">TRUST: <span id="trustPoints">100</span></div>
+                </div>
+                <div class="speech-bubble" id="b5">INITIALIZING CUSTOM LOGIC...</div>
+                <div class="panel-footer" style="background: var(--yellow); color: black;">
+                    <img class="panel-avatar" src="https://cdn-icons-png.flaticon.com/512/1904/1904425.png">
+                    CUSTOM: <span id="customName">NEW AGENT</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR STATUS -->
+        <aside id="sidebar">
+            <h2 class="sidebar-title">COMMAND CENTER</h2>
+            
+            <div class="stat-card">
+                <div class="stat-label">WALLET AMMUNITION</div>
+                <div class="stat-value" id="wallet-val">$10,000.00</div>
+            </div>
+
+            <div class="mission-panel">
+                <div class="stat-label" style="margin-left: 5px;">ACTIVE MISSIONS (SLOTS)</div>
+                
+                <!-- MISSION 1 -->
+                <div class="mission-card" id="m1">
+                    <div class="mission-header">
+                        <span>MISSION 01</span>
+                        <span class="mission-status" id="ms1">HUNTING...</span>
+                    </div>
+                    <p class="mission-desc" id="md1">AGEN0 scanning for fastest yield opportunities in Somnia Network...</p>
+                </div>
+
+                <!-- MISSION 2 -->
+                <div class="mission-card" id="m2">
+                    <div class="mission-header">
+                        <span>MISSION 02</span>
+                        <span class="mission-status" id="ms2">STANDBY</span>
+                    </div>
+                    <p class="mission-desc" id="md2">Awaiting higher market volatility to engage second slot.</p>
+                </div>
+            </div>
+
+            <!-- ACTIVE POSITIONS DISPLAY -->
+            <div id="active-positions" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="stat-label" style="margin-left: 5px;">LIVE MARKET EXPOSURE</div>
+                <div id="pos-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Positions will pop up here -->
+                </div>
+            </div>
+
+            <div style="margin-top: auto; font-size: 0.8rem; color: #444; text-align: center; font-family: monospace;">
+                SOMGEN CORE V1.0 - ENCRYPTED
+            </div>
+        </aside>
+    </div>
+
+    <div id="final-modal">
+        <div style="font-family: 'Permanent Marker'; font-size: 2rem;">AGEN4 HAS EXECUTED ON SOMNIA!</div>
+        <h2 id="final-text">50X LONG ACTIVATED!</h2>
+        <p style="margin-top: 20px; font-family: 'Bangers'; font-size: 1.5rem; color: var(--yellow);">RE-ENGAGING ORCHESTRATOR LOOP IN <span id="countdown">5</span>S...</p>
+    </div>
+
+    <div class="action-word" id="action-word">BULLISH!</div>
+
+    <script>
+        const input = document.getElementById('chat-input');
+        const landing = document.getElementById('landing');
+        const mainContainer = document.getElementById('main-container');
+        const modal = document.getElementById('final-modal');
+        const actionWord = document.getElementById('action-word');
+        const finalText = document.getElementById('final-text');
+        
+        let isCustomActive = false;
+        let customPrompt = "";
+        let trustPoints = 100;
+        
+        // Sidebar Elements
+        const ms1 = document.getElementById('ms1');
+        const md1 = document.getElementById('md1');
+        const m1 = document.getElementById('m1');
+        const walletVal = document.getElementById('wallet-val');
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        input.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const val = input.value.toUpperCase();
+                if(val.includes('AGGRESSIVE') || val.includes('NORMAL') || val.includes('SAFETY')) {
+                    landing.style.opacity = '0';
+                    document.getElementById('toggle-sidebar').style.display = 'block';
+                    if (val.includes('SAFETY')) {
+                        finalText.innerText = "ROUTED TO SALT STAKING!";
+                    } else if (val.includes('NORMAL')) {
+                        finalText.innerText = "10X LONG ACTIVATED!";
+                    } else {
+                        finalText.innerText = "50X LONG ACTIVATED!";
+                    }
+
+                    await sleep(500);
+                    landing.style.display = 'none';
+                    mainContainer.style.display = 'grid';
+                    startComicStory(val);
+                } else {
+                    input.value = "";
+                    input.placeholder = "TOLONG KETIK AGGRESSIVE / NORMAL / SAFETY";
+                }
+            }
+        });
+
+        function toggleSidebar() {
+            const container = document.getElementById('main-container');
+            const btn = document.getElementById('toggle-sidebar');
+            container.classList.toggle('sidebar-hidden');
+            btn.innerText = container.classList.contains('sidebar-hidden') ? "STATS: OFF" : "STATS: ON";
+        }
+
+        async function forgeAgent() {
+            const prompt = document.getElementById('forgePrompt').value;
+            if (!prompt) return alert("Tolong masukkan instruksi untuk agen kustom!");
+            
+            isCustomActive = true;
+            customPrompt = prompt;
+            
+            // UI setup for custom agent
+            document.getElementById('p5').style.display = 'flex';
+            document.getElementById('customName').innerText = "VANGUARD-X"; // Default custom name
+            
+            // Proceed to app
+            landing.style.opacity = '0';
+            document.getElementById('toggle-sidebar').style.display = 'block';
+            await sleep(500);
+            landing.style.display = 'none';
+            mainContainer.style.display = 'grid';
+            startComicStory('AGGRESSIVE'); // Default profile for custom agents
+        }
+
+        async function showAction(text, x, y) {
+            actionWord.innerHTML = text;
+            actionWord.style.left = x + 'px';
+            actionWord.style.top = y + 'px';
+            actionWord.style.display = 'block';
+            await sleep(1000);
+            actionWord.style.display = 'none';
+        }
+
+        async function fetchRawMessage(agentFolder, profile, coin, context = "") {
+            const agentKey = agentFolder.toUpperCase();
+            const rsi = Math.floor(Math.random() * 40 + 30);
+            const isDefiProposed = context.includes("yield") || context.includes("DeFi") || context.includes("LP") || context.includes("Vault");
+
+            const defiProtocols = [
+                { name: "Somnex V3", type: "Yield Farming" },
+                { name: "Somnia Vault", type: "Auto-Compounder" },
+                { name: "stSOM", type: "Liquid Staking" }
+            ];
+
+            const prefixes = {
+                'AGEN0': ["COMMANDER:", "STRATEGIST:", "ROUTING:"],
+                'AGEN1': ["TECH-INTEL:", "CHART-READER:", "RISK-SCOUT:"],
+                'AGEN2': ["WHALE-FLOW:", "CHAIN-ANALYST:", "POOL-WATCHER:"],
+                'AGEN3': ["SOCIAL-RADAR:", "SENTIMENT-CORE:", "SECURITY-UNIT:"],
+                'AGEN4': ["JUDGE-UNIT:", "EXECUTOR-X:", "FINAL-CONSENSUS:"]
+            };
+
+            const prefix = prefixes[agentKey][Math.floor(Math.random() * 3)];
+            const protocol = defiProtocols[Math.floor(Math.random() * defiProtocols.length)];
+
+            if (agentKey === 'AGEN0') {
+                if (isDefiProposed) return `[${prefix}] Saya mendeteksi yield optimal di ${protocol.name} (${protocol.type}). Fokus pada stabilitas modal.`;
+                return `[${prefix}] Memetakan rute agresif untuk trading ${coin}. Analisa teknikal dan on-chain diperlukan.`;
+            }
+            
+            if (agentKey === 'AGEN1') {
+                if (isDefiProposed) return `[${prefix}] Menyimak rute AGEN0. Stabilitas pair ${coin} sangat tinggi, risiko Impermanent Loss minimal.`;
+                return `[${prefix}] Struktur ${coin} menunjukkan momentum breakout. RSI @${rsi} mendukung langkah trading ini.`;
+            }
+
+            if (agentKey === 'AGEN2') {
+                const flows = (Math.random() * 5).toFixed(2);
+                if (isDefiProposed) return `[${prefix}] Kontrak ${protocol.name} menunjukkan inflow positif $${flows}M. Likuiditas pool aman untuk entri.`;
+                return `[${prefix}] Deteksi akumulasi institusi $${flows}M pada pair ${coin}. Data on-chain sangat solid.`;
+            }
+
+            if (agentKey === 'AGEN3') {
+                if (isDefiProposed) return `[${prefix}] Audit protokol selesai. Keamanan ${protocol.name} terverifikasi. Sentimen komunitas positif.`;
+                return `[${prefix}] Psikologi market mendukung pergerakan ${coin}. Tidak ada deteksi anomali atau Black Swan.`;
+            }
+
+            if (agentKey === 'CUSTOM') {
+                const analysis = isDefiProposed ? "yield" : "trading momentum";
+                return `[CUSTOM/LLM] Berdasarkan instruksi Anda (${customPrompt}), saya menilai ${analysis} pada ${coin} ini ${rsi > 50 ? 'sangat menjanjikan' : 'perlu diwaspadai'}. Trust Score: ${trustPoints}.`;
+            }
+
+            // AGEN4 Final Decision
+            if (isDefiProposed) return `[${prefix}] KEPUTUSAN FINAL: Pindahkan modal ke ${protocol.name} (Pair: ${coin}/USDT). Eksekusi Yield dimulai!`;
+            return `[${prefix}] KONSENSUS TERCAPAI! Eksekusi Trading ${coin} diaktifkan dengan profil ${profile}.`;
+        }
+
+        let activeSlots = 0;
+        const potentialCoins = ["SOMI", "WETH", "WBTC"];
+
+        async function startComicStory(profile) {
+            if (activeSlots >= 2) return;
+            activeSlots++;
+            
+            const currentSlot = activeSlots;
+            const currentCoin = potentialCoins[Math.floor(Math.random() * potentialCoins.length)];
+            
+            // UI References
+            const statusEl = document.getElementById(`ms${currentSlot}`);
+            const descEl = document.getElementById(`md${currentSlot}`);
+            const cardEl = document.getElementById(`m${currentSlot}`);
+
+            // --- DYNAMIC EVIDENCE GIFS ---
+            const gifSets = {
+                'p1': [
+                    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8vAtC76U3uS7877rXz/giphy.gif",
+                    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3pwa3N0bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKVUn7iM8FMEU24/giphy.gif"
+                ],
+                'p2': [
+                    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWp5NWc4eHpjZ25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uS071hlk6FcrGEF36p/giphy.gif",
+                    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lopx9eUi34rbq/giphy.gif"
+                ]
+            };
+            
+            // --- INITIAL SILENCE: Field agents standby ---
+            ['p1', 'p2', 'p3', 'p4', 'p5'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.style.opacity = "0.2";
+                el.style.filter = "grayscale(100%) blur(2px)";
+                el.classList.remove('active');
+                
+                // Rotate GIFs if available
+                if (gifSets[id]) {
+                    const img = el.querySelector('img');
+                    img.src = gifSets[id][Math.floor(Math.random() * gifSets[id].length)];
+                }
+            });
+
+            statusEl.innerText = "DIA ORACLE SYNCING...";
+            cardEl.classList.add('active');
+
+            // --- 0. AGEN0 BRIEFING (The Commander) ---
+            const commanderMsg = await fetchRawMessage('AGEN0', profile, currentCoin);
+            descEl.innerHTML = `<span style="color:var(--yellow)">[COMMANDER AGEN0]:</span> Querying DIA Oracle...`;
+            await sleep(2000); // Strategic pause
+            
+            descEl.innerHTML = `<span style="color:var(--yellow)">[COMMANDER AGEN0]:</span> ${commanderMsg}`;
+            statusEl.innerText = "COUNCIL DEBATE: " + currentCoin;
+            
+            // --- WAKE UP FIELD AGENTS ---
+            await sleep(1000);
+            ['p1', 'p2', 'p3', 'p4', 'p5'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.style.opacity = "1";
+                el.style.filter = "none";
+            });
+
+            // --- THE COUNCIL DEBATE SEQUENCE ---
+            const agentsToDebate = isCustomActive ? 
+                [{p:'p1', a:'AGEN1'}, {p:'p2', a:'AGEN2'}, {p:'p3', a:'AGEN3'}, {p:'p5', a:'CUSTOM'}] : 
+                [{p:'p1', a:'AGEN1'}, {p:'p2', a:'AGEN2'}, {p:'p3', a:'AGEN3'}];
+
+            for (let item of agentsToDebate) {
+                const panel = document.getElementById(item.p);
+                const bubble = document.getElementById(`b${item.p.slice(1)}`);
+                
+                panel.classList.add('active', 'speaking');
+                bubble.innerText = "...THINKING...";
+                bubble.style.display = 'block';
+                
+                await sleep(1500);
+                bubble.innerText = await fetchRawMessage(item.a, profile, currentCoin, commanderMsg);
+                
+                await sleep(2500);
+                panel.classList.remove('speaking');
+            }
+            statusEl.innerText = "RESOLVING BEST PROFIT...";
+            
+            await sleep(1500);
+            document.getElementById('p4').classList.add('active', 'speaking'); 
+            
+            // SIMULATED LOGIC SYNC WITH BACKEND
+            const isReject = Math.random() < 0.25; 
+            const isDefi = !isReject && Math.random() > 0.6;
+            const score = (Math.random() * 0.5 + 0.3).toFixed(2);
+            
+            let decisionType = "REJECT";
+            if (!isReject) decisionType = isDefi ? "EXECUTE_DEFI" : (Math.random() > 0.5 ? "LONG" : "SHORT");
+            
+            let consensusText = "";
+            if (decisionType === "REJECT") {
+                consensusText = `[SKOR: ${score}] \n\nAGEN4: MISI DIBATALKAN. Debat antar agen mendeteksi risiko tinggi atau manipulasi market.`;
+            } else {
+                consensusText = `[SKOR: ${score}] \n\nAGEN4: ` + (isDefi ? "Trading conviction rendah. Mengalihkan ke peluang DEFI YIELD." : `Konsensus tercapai. Eksekusi ${decisionType} diaktifkan.`);
+            }
+            
+            document.getElementById('b4').innerText = consensusText;
+            document.getElementById('b4').style.display = 'block';
+            
+            await sleep(2000);
+            document.getElementById('p4').classList.remove('speaking');
+
+            // --- UI Update (Sidebar & Logs) ---
+            await sleep(1000);
+            
+            const posList = document.getElementById('pos-list');
+            const posCard = document.createElement('div');
+            posCard.className = 'stat-card';
+            
+            if (decisionType === "REJECT") {
+                statusEl.innerText = "REJECTED";
+                cardEl.style.borderColor = "var(--red)";
+                posCard.style.borderColor = "#444";
+                posCard.style.opacity = "0.7";
+                posCard.innerHTML = `
+                    <div style="color:#888">✖ REJECTED: ${currentCoin}</div>
+                    <div style="font-size:0.7rem; color:#666">REASON: Market Manipulation / High Risk</div>
+                `;
+                posList.prepend(posCard);
+                descEl.innerText = "Mission Aborted for Safety.";
+                
+                activeSlots--; 
+            } else {
+                statusEl.innerText = "ACTIVE";
+                const isDefiNow = decisionType === "EXECUTE_DEFI";
+                const realPair = `${currentCoin}/USDT`;
+                const realAPR = (Math.random() * 20 + 65).toFixed(1) + "%";
+                const protocolName = isDefiNow ? "Somnex V3" : currentCoin;
+                
+                posCard.style.borderColor = isDefiNow ? 'var(--yellow)' : 'var(--green)';
+                posCard.innerHTML = `
+                    <div style="color:${isDefiNow ? 'var(--yellow)' : 'var(--green)'}">● ${isDefiNow ? 'DEFI: ' + protocolName : decisionType + ' ' + currentCoin}</div>
+                    <div style="font-family:monospace; color:#666">${isDefiNow ? 'PAIR: ' + realPair : 'TRADING POSITION'}</div>
+                    <div style="font-size:0.7rem; color:var(--blue)">${isDefiNow ? 'TARGET APR: ' + realAPR : 'CONFIDENCE: ' + score}</div>
+                    <div style="margin-top:5px; font-size:0.6rem;">
+                        <a href="https://explorer.somnia.network/address/0xbA0E0750A56e995506CA458b2BdD752754CF39C4" target="_blank" style="color:var(--yellow); text-decoration:none; border-bottom:1px solid var(--yellow)">🔍 VERIFY ON EXPLORER</a>
+                    </div>
+                `;
+                posList.prepend(posCard);
+                descEl.innerText = isDefiNow ? `Routing to ${protocolName} (${realPair})` : `${decisionType} | ${currentCoin}`;
+                
+                walletVal.innerText = `$${(10000 + (activeSlots * 150)).toFixed(2)}`;
+                walletVal.style.color = "var(--green)";
+            }
+
+            modal.style.display = 'block';
+            finalText.innerText = decisionType === "REJECT" ? "MISSION ABORTED FOR SAFETY!" : `${decisionType} ACTIVATED!`;
+            finalText.style.color = decisionType === "REJECT" ? "var(--red)" : "var(--green)";
+            
+            let timeLeft = 3; 
+            const timer = setInterval(async () => {
+                timeLeft--;
+                const el = document.getElementById('countdown');
+                if (el) el.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    modal.style.display = 'none';
+                    
+                    // --- AUTO-RESUME HUNTING ---
+                    if (activeSlots < 2) {
+                        console.log("[ORCHESTRATOR] Slot free. Resuming hunt...");
+                        await sleep(1500);
+                        startComicStory(profile); 
+                    }
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

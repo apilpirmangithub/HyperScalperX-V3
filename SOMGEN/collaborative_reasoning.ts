@@ -70,9 +70,22 @@ export class CollaborativeForum {
                     opinion = `[SOCIAL] Psikologi market ${psych} (@${sentiment}). ${bias !== 0 ? "Narasi mendukung pergerakan." : "Belum ada katalis fundamental."}`;
                 }
                 break;
+            case "CUSTOM": // VANGUARD-X (Dynamic User Agent)
+                const prompt = (rawData as any).customPrompt || "Analytical Sniper";
+                let multiplier = 1;
+                if (prompt.toLowerCase().includes("agresif")) multiplier = 1.3;
+                if (prompt.toLowerCase().includes("skeptis")) multiplier = 0.7;
+                
+                bias = (rawData.rsi > 50 ? 1 : -1) * multiplier;
+                opinion = `[CUSTOM] Menjalankan protokol kustom: ${prompt}. Bias keputusan: ${bias.toFixed(2)}.`;
+                break;
         }
 
         this.sharedContext.push({ agent: agentName, opinion, bias });
+        // Dynamically add CUSTOM weight if it participates
+        if (agentName === "CUSTOM" && !this.weights["CUSTOM"]) {
+            this.weights["CUSTOM"] = 0.35; 
+        }
         return opinion;
     }
 

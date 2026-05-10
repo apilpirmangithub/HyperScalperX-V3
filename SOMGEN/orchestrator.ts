@@ -8,6 +8,8 @@ let activeActions = {
 };
 const MAX_CONCURRENT_ACTIONS = 2;
 let userProfile = "AGGRESSIVE"; // User default
+let customAgentActive = true;  // Simulated: User forged an agent
+let customAgentPrompt = "Jadilah analis agresif yang mengejar yield tinggi"; 
 
 const forum = new CollaborativeForum();
 
@@ -55,6 +57,10 @@ async function startOrchestratorLoop() {
             await forum.participate("AGEN1", marketData, currentCoin);
             await forum.participate("AGEN2", marketData, currentCoin);
             await forum.participate("AGEN3", marketData, currentCoin);
+
+            if (customAgentActive) {
+                await forum.participate("CUSTOM", { ...marketData, customPrompt: customAgentPrompt } as any, currentCoin);
+            }
 
             // 3. CONSENSUS RESOLUTION
             const consensus = forum.resolveConsensus(userProfile);

@@ -35,14 +35,14 @@ async function fetchLogs() {
 
         // 2. Error Logs
         console.log('Fetching error logs...');
-        const errLogs = await ssh.execCommand('tail -n 50 /root/.pm2/logs/HypeKing-err.log');
-        report += `=== ⚠️ RECENT ERROR LOGS (Last 50) ===\n`;
+        const errLogs = await ssh.execCommand('tail -n 1000 /root/.pm2/logs/HypeKing-err.log');
+        report += `=== ⚠️ RECENT ERROR LOGS (Last 1000) ===\n`;
         report += (errLogs.stdout || '(no errors in log)') + '\n\n';
 
         // 3. Output Logs
         console.log('Fetching output logs...');
-        const outLogs = await ssh.execCommand('tail -n 50 /root/.pm2/logs/HypeKing-out.log');
-        report += `=== 💓 BOT OUTPUT LOGS (Last 50) ===\n`;
+        const outLogs = await ssh.execCommand('tail -n 1000 /root/.pm2/logs/HypeKing-out.log');
+        report += `=== 💓 BOT OUTPUT LOGS (Last 1000) ===\n`;
         report += outLogs.stdout + '\n';
 
         fs.writeFileSync('../vps_current_logs.txt', report);

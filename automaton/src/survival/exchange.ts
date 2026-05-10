@@ -32,6 +32,7 @@ export interface ExchangeOrder {
     px: number;
     timestamp: number;
     reduceOnly: boolean;
+    type?: string;
 }
 
 export interface Exchange {
@@ -42,11 +43,12 @@ export interface Exchange {
     getCandles(asset: string, interval: string, limit: number): Promise<Candle[]>;
     getMidPrice(asset: string): Promise<number>;
     placeLimitOrder(asset: string, isBuy: boolean, size: number, price: number): Promise<any>;
+    placeMarketOrder(asset: string, isBuy: boolean, size: number): Promise<any>;
     closePosition(asset: string, size: number, isBuy: boolean): Promise<any>;
     placeTPSLOrders(asset: string, size: number, isBuy: boolean, tpPrice: number, slPrice: number): Promise<any>;
     getOpenOrders(): Promise<ExchangeOrder[]>;
     cancelOrder(asset: string, oid: any): Promise<any>;
     subscribeToPrices(assets: string[]): void;
     getVolumeTop(limit: number): Promise<string[]>;
-    getUserFills(address?: string): Promise<any[]>;
+    getUserFills(address?: string, symbol?: string): Promise<any[]>;
 }

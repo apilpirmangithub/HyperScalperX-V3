@@ -9,7 +9,7 @@ async function optimize() {
 
     console.log("🚀 STARTING AGGRESSIVE HIGH-FREQUENCY OPTIMIZER...");
 
-    let bestResult = { totalProfit: -Infinity, params: {} };
+    let bestResult: { totalProfit: number, params: any } = { totalProfit: -Infinity, params: {} };
 
     for (const z of zScores) {
         for (const tp of tps) {

@@ -20,7 +20,7 @@ async function uploadDist() {
         });
 
         console.log('🚀 Starting bot on VPS...');
-        await ssh.execCommand('pm2 start dist/index.js --name HypeKing', { cwd: '/root/automaton' });
+        await ssh.execCommand('pm2 restart HypeKing', { cwd: '/root/automaton' });
         
         console.log('✅ VPS Updated and Started successfully via Local Build.');
         process.exit(0);

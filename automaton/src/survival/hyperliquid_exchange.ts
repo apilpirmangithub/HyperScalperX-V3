@@ -41,6 +41,13 @@ export class HyperliquidExchange implements Exchange {
         return await hl.placeLimitOrder(asset, isBuy, size, price);
     }
 
+    async placeMarketOrder(asset: string, isBuy: boolean, size: number): Promise<any> {
+        // Hyperliquid doesn't have native market orders, use aggressive limit
+        const midPx = await hl.getMidPrice(asset);
+        const slippage = isBuy ? 1.002 : 0.998; // 0.2% slippage
+        return await hl.placeLimitOrder(asset, isBuy, size, midPx * slippage);
+    }
+
     async closePosition(asset: string, size: number, isBuy: boolean): Promise<any> {
         return await hl.closePosition(asset, size, isBuy);
     }
@@ -85,7 +92,7 @@ export class HyperliquidExchange implements Exchange {
         .map(a => a.name);
     }
 
-    async getUserFills(address?: string): Promise<any[]> {
+    async getUserFills(address?: string, symbol?: string): Promise<any[]> {
         return await hl.getUserFills(address || "");
     }
 }

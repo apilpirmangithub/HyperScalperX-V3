@@ -10,8 +10,12 @@ async function getLogs() {
       password: '@Avenged7XX'
     });
 
-    const result = await ssh.execCommand('pm2 logs HypeKing --lines 30 --nostream');
-    console.log(result.stdout);
+    console.log("📄 Fetching PM2 logs for HypeKing (1000 lines)...");
+    const result = await ssh.execCommand('pm2 logs HypeKing --nostream --lines 1000');
+    
+    if (result.stdout) {
+      console.log(result.stdout);
+    }
     console.log(result.stderr);
 
     ssh.dispose();

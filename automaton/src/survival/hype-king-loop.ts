@@ -185,7 +185,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                 }
 
                 // Self-Healing SL
-                const hasExchangeSL = exchangeOrders.some((o: any) => o.coin === pos.asset && o.reduceOnly === true);
+                const hasExchangeSL = exchangeOrders.some((o: any) => o.coin === pos.asset && (o.reduceOnly === true || String(o.type).toLowerCase() === 'stop_market'));
 
                 
                 if (!hasExchangeSL) {
@@ -201,9 +201,21 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     const slPrice = isLong ? trade.entry_price * (1 - (trade.dynamic_sl / 100)) : trade.entry_price * (1 + (trade.dynamic_sl / 100));
                     
                     try {
-                        const stale = exchangeOrders.filter((o: any) => o.coin === pos.asset);
+                        // Smart Cancel: Find existing SL for this asset and side
+                        const stale = exchangeOrders.filter((o: any) => 
+                            o.coin === pos.asset && 
+                            (String(o.type).toLowerCase() === 'stop_market' || String(o.type).toLowerCase() === 'take_profit_market')
+                        );
+                        
                         for (const s of stale) {
-                            await exchange.cancelOrder(s.coin, s.oid);
+                            try {
+                                const orderToCancel = s as any;
+                                log(`🧹 Cleaning up existing ${orderToCancel.type} order for ${pos.asset} (ID: ${s.oid})...`);
+                                await exchange.cancelOrder(s.coin, s.oid);
+                            } catch (e: any) {
+                                // Ignore "Unknown order" during cancel, it means it's already gone
+                                if (!e.message.includes("Unknown order")) throw e;
+                            }
                         }
 
                         log(`🛡️ Placing Hard SL for ${pos.asset} (SL: ${trade.dynamic_sl}%)...`);
@@ -250,22 +262,38 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
             const { asset, direction, signal } = best;
             
             const midPx = await exchange.getMidPrice(asset);
-            const margin = (bal.totalValue - 0.5) * HYPE_KING.marginPortion; 
-            const sizeAsset = (margin * HYPE_KING.TRADING_LEVERAGE) / midPx;
-
-            log(`🎯 Best Signal Found: ${asset} (Score: ${best.score.toFixed(2)})`);
+            let margin = (bal.totalValue - 0.5) * HYPE_KING.marginPortion; 
             
-            // ENSURE WE HAVE ENOUGH MARGIN
-            if (bal.withdrawable < margin) {
-                log(`⚠️ Insufficient Margin: Need $${margin.toFixed(2)}, Have $${bal.withdrawable.toFixed(2)}`);
-                return;
+            // Fix Margin Insufficient: cap it at 90% of available withdrawable balance
+            if (bal.withdrawable < margin * 1.05) {
+                margin = bal.withdrawable * 0.90;
             }
 
-            const result = await (exchange as any).client.createMarketOrder(
-                `${asset}/USDT:USDT`,
-                direction === "LONG" ? 'buy' : 'sell',
-                (exchange as any).client.amountToPrecision(`${asset}/USDT:USDT`, sizeAsset)
-            );
+            // Safety check
+            if (margin < 2.0) {
+                 log(`⚠️ Available margin too small for entry: $${bal.withdrawable.toFixed(2)}`);
+                 return;
+            }
+
+            // Add 5% buffer for Binance market order slippage/fees which require extra initial margin
+            const sizeAsset = (margin * 0.95 * HYPE_KING.TRADING_LEVERAGE) / midPx;
+
+            log(`🎯 Best Signal Found: ${asset} (Score: ${best.score.toFixed(2)})`);
+
+            log(`📊 Entry Calc: Margin=$${margin.toFixed(2)} | Leverage=${HYPE_KING.TRADING_LEVERAGE}x | Price=$${midPx.toFixed(4)} | Size=${sizeAsset.toFixed(6)} ${asset}`);
+
+            let result;
+            try {
+                result = await exchange.placeMarketOrder(
+                    asset,
+                    direction === "LONG",
+                    sizeAsset
+                );
+            } catch (e: any) {
+                log(`❌ ENTRY ERROR for ${asset}: ${e.message}`);
+                await sendTelegramMessage(`⚠️ <b>ENTRY FAILED</b>: ${asset}\nReason: ${e.message}`);
+                return;
+            }
 
             if (result) {
                 const actualEntryPrice = result.average || result.price || midPx;
@@ -302,6 +330,7 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
                     }
                 } catch (e: any) {
                     log(`⚠️ Immediate SL Placement Failed: ${e.message}. Bot will retry in next loop.`);
+                    await sendTelegramMessage(`⚠️ <b>SL FAILED</b>: ${asset}\nReason: ${e.message}`);
                 }
             }
         }
@@ -311,10 +340,11 @@ async function runCycle(db: AutomatonDatabase, exchange: Exchange): Promise<void
 async function syncExternalTrades(db: AutomatonDatabase, exchange: Exchange, userAddress: string | undefined) {
     const openTrades = db.getOpenTrades();
     if (openTrades.length === 0) return;
-    const fills = await exchange.getUserFills(userAddress);
-    if (!fills) return;
 
     for (const trade of openTrades) {
+        const fills = await exchange.getUserFills(userAddress, trade.market);
+        if (!fills || fills.length === 0) continue;
+
         const tradeOpenTime = new Date(trade.open_time).getTime();
         const matchingFills = fills.filter(f => {
             const fillTime = new Date(f.time).getTime();

@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Somnia Predator - COMIC EDITION</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Outfit:wght@400;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Outfit:wght@400;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --yellow: #ffea00;
@@ -14,8 +17,12 @@
             --border: #fff;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background-color: var(--bg);
             color: white;
@@ -23,7 +30,8 @@
             overflow: hidden;
             font-family: 'Outfit', sans-serif;
             background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 20px 20px; /* Halftone-ish background */
+            background-size: 20px 20px;
+            /* Halftone-ish background */
         }
 
         #landing {
@@ -67,7 +75,8 @@
             grid-template-columns: 1.2fr 1fr;
             grid-template-rows: 1fr 1fr;
             gap: 15px;
-            background: #fff; /* Typical comic paper white */
+            background: #fff;
+            /* Typical comic paper white */
         }
 
         .panel {
@@ -82,7 +91,10 @@
             transform: translateY(50px);
         }
 
-        .panel.active { opacity: 1; transform: translateY(0); }
+        .panel.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
         .panel-media {
             flex: 1;
@@ -111,7 +123,8 @@
         }
 
         .panel-avatar {
-            width: 60px; height: 60px;
+            width: 60px;
+            height: 60px;
             border: 3px solid #000;
             background: #fff;
         }
@@ -119,7 +132,9 @@
         /* Speech Bubbles */
         .speech-bubble {
             position: absolute;
-            bottom: 80px; left: 20px; right: 20px;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
             background: #fff;
             border: 4px solid #000;
             padding: 15px;
@@ -146,7 +161,9 @@
         /* The Final Decision Modal */
         #final-modal {
             position: fixed;
-            top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-2deg);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-2deg);
             background: var(--red);
             border: 8px solid #000;
             padding: 40px;
@@ -157,10 +174,13 @@
             box-shadow: 20px 20px 0px var(--yellow);
         }
 
-        #final-modal h2 { font-family: 'Bangers', cursive; font-size: 5rem; }
-
+        #final-modal h2 {
+            font-family: 'Bangers', cursive;
+            font-size: 5rem;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="landing">
@@ -173,7 +193,8 @@
         <!-- Panel 1: News Scout -->
         <div class="panel" id="p1">
             <div class="panel-media">
-                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGhjdXU5YmJnY25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lopx9eUi34rbq/giphy.gif" alt="News">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGhjdXU5YmJnY25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lopx9eUi34rbq/giphy.gif"
+                    alt="News">
             </div>
             <div class="speech-bubble" id="b1">BOSS! KABAR PANAS! VOLUME NEAR MELEDAK DI SOMNIA!</div>
             <div class="panel-footer">
@@ -185,7 +206,8 @@
         <!-- Panel 2: Trend Master -->
         <div class="panel" id="p2">
             <div class="panel-media">
-                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8vAtC76U3uS7877rXz/giphy.gif" alt="Chart">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8vAtC76U3uS7877rXz/giphy.gif"
+                    alt="Chart">
             </div>
             <div class="speech-bubble" id="b2">INI MOMEN KITA! BULLISH RUSH! HAJAR 20X LONG!</div>
             <div class="panel-footer">
@@ -197,7 +219,8 @@
         <!-- Panel 3: Zen Monk -->
         <div class="panel" id="p3">
             <div class="panel-media">
-                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWp5NWc4eHpjZ25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uS071hlk6FcrGEF36p/giphy.gif" alt="Zen">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWp5NWc4eHpjZ25ycXltNW5rZHpjZTh3eTBmaHk2bmQ3NG1ndnRhdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uS071hlk6FcrGEF36p/giphy.gif"
+                    alt="Zen">
             </div>
             <div class="speech-bubble" id="b3">TENANG... TUNGGU WICK NYA MUNCUL. SABAR ADALAH CUAN.</div>
             <div class="panel-footer">
@@ -209,7 +232,8 @@
         <!-- Panel 4: The General -->
         <div class="panel" id="p4">
             <div class="panel-media">
-                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/a3fV9o23qWcI8/giphy.gif" alt="General">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnZrcG45bm80ZmE0cGVvN3RjcmI0cGlrOXhsczBrZXRwdjAxbWlsMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/a3fV9o23qWcI8/giphy.gif"
+                    alt="General">
             </div>
             <div class="speech-bubble" id="b4">KONSENSUS DICAPAI! EKSEKUSI LONG NEAR SEKARANG!</div>
             <div class="panel-footer">
@@ -222,7 +246,9 @@
     <div id="final-modal">
         <div style="font-family: 'Permanent Marker'; font-size: 2rem;">MISSION ACCOMPLISHED!</div>
         <h2 id="final-text">LONG NEAR!</h2>
-        <button style="margin-top: 20px; padding: 10px 30px; font-family: 'Bangers'; font-size: 1.5rem; background: #000; color: #fff; border: none; cursor: pointer;" onclick="location.reload()">NEXT MISSION!</button>
+        <button
+            style="margin-top: 20px; padding: 10px 30px; font-family: 'Bangers'; font-size: 1.5rem; background: #000; color: #fff; border: none; cursor: pointer;"
+            onclick="location.reload()">NEXT MISSION!</button>
     </div>
 
     <div class="action-word" id="action-word">PROFIT!</div>
@@ -299,4 +325,5 @@
         }
     </script>
 </body>
+
 </html>
